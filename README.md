@@ -56,6 +56,9 @@ Compilation instructions using CMake
 Visual Studio 2017 comes with integrated CMake support which should make this process
 fairly simple.
 
+Please note that you must enable `Visual C++ CMake tools` in the Visual Studio
+installer for the integrated support!
+
 * After cloning the repo, open Visual Studio and instead of opening a project, select Open Folder, and navigate to the newly cloned repo.
 * You are now using VS2017 in a CMake environment. Some settings will have changed from what you may be used to. You should still be able to compile and run as usual. The runnable/debugable target should be called `benchmark`.
 
