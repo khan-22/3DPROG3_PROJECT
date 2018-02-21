@@ -1,12 +1,15 @@
 #include <iostream>
 
-#include <bench_template.h>
+#include <bench_template.hpp>
+#include <bench_vulkan.hpp>
 
 int main()
 {
   std::cout << "Hello World" << std::endl;
 
-  f();
+  {
+    BenchVulkan bv;
+  }
 
   std::cin.ignore();
   std::cin.get();

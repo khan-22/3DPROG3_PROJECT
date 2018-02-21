@@ -1,7 +1,13 @@
-#include "bench_template.h"
+#include "bench_template.hpp"
 
 #include <iostream>
 
-void f() {
-  std::cout << "Hello World from template!" << std::endl;
+BenchTemplate::BenchTemplate() {
+  //
+  std::cout << "Created template" << std::endl;
+}
+
+BenchTemplate::~BenchTemplate() {
+  //
+  std::cout << "Destroyed template" << std::endl;
 }

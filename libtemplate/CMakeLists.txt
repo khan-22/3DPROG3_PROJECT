@@ -9,3 +9,7 @@ target_include_directories(${TARGET_NAME}
     include/
 )
 
+target_compile_features(${TARGET_NAME}
+  PUBLIC
+    cxx_std_14
+)
