@@ -11,14 +11,8 @@ BenchVulkan::~BenchVulkan() {
   std::cout << "Destroyed BenchVulkan" << std::endl;
 }
 
-void BenchVulkan::initialize() {
+void BenchVulkan::initialize() {}
 
-}
+void BenchVulkan::execute() {}
 
-void BenchVulkan::execute() {
-  
-}
-
-void BenchVulkan::clean_up() {
-  
-}
+void BenchVulkan::clean_up() {}

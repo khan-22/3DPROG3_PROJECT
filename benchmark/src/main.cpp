@@ -1,15 +1,15 @@
 #include <iostream>
 
 #include <bench_template.hpp>
+
+#include <bench_opengl.hpp>
 #include <bench_vulkan.hpp>
 
-int main()
-{
+int main() {
   std::cout << "Hello World" << std::endl;
 
-  {
-    BenchVulkan bv;
-  }
+  { BenchVulkan bv; }
+  { BenchOpenGL bo; }
 
   std::cin.ignore();
   std::cin.get();

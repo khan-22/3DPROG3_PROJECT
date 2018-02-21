@@ -1,7 +1,7 @@
-set(TARGET_NAME benchvulkan)
+set(TARGET_NAME benchopengl)
 
 add_library(${TARGET_NAME} STATIC
-  src/bench_vulkan.cpp
+  src/bench_opengl.cpp
 )
 
 target_include_directories(${TARGET_NAME}

@@ -6,7 +6,7 @@
 #include <bench_template.hpp>
 
 class BenchVulkan : public BenchTemplate {
-public:
+ public:
   BenchVulkan();
   virtual ~BenchVulkan();
 
@@ -14,10 +14,7 @@ public:
   virtual void execute() final override;
   virtual void clean_up() final override;
 
-private:
-
+ private:
 };
 
-
-
-#endif //BENCH_VULKAN_HPP
+#endif  // BENCH_VULKAN_HPP

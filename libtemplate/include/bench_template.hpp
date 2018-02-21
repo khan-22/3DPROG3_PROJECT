@@ -4,7 +4,7 @@
 #define BENCH_TEMPLATE_HPP
 
 class BenchTemplate {
-public:
+ public:
   BenchTemplate();
   virtual ~BenchTemplate();
 
@@ -12,9 +12,7 @@ public:
   virtual void execute() = 0;
   virtual void clean_up() = 0;
 
-private:
-
+ private:
 };
 
-
-#endif //BENCH_TEMPLATE_HPP
+#endif  // BENCH_TEMPLATE_HPP
