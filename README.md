@@ -38,8 +38,8 @@ Compilation instructions using CMake
 
 ## Prerequisites
 
-* git
-* CMake 3.8.2 (or higher)
+* git ![alt text](https://git-scm.com/images/logos/logomark-orange@2x.png "Git")
+* CMake 3.8.2 (or higher) ![alt text](https://www.macupdate.com/images/icons256/49301.png "CMake")
 * A c++ compiler with c++14 compatability
 
 ## Compilation on Linux
