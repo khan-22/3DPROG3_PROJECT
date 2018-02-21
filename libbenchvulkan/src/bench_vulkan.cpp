@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <vulkan/vulkan.hpp>
+
 BenchVulkan::BenchVulkan() : BenchTemplate() {
   //
   std::cout << "Created BenchVulkan" << std::endl;
