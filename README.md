@@ -56,7 +56,7 @@ Compilation instructions using CMake
 Visual Studio 2017 comes with integrated CMake support which should make this process
 fairly simple.
 
-Please note that you must enable `Visual C++ CMake tools` in the Visual Studio
+Please note that you must enable `Visual C++ tools for CMake` in the Visual Studio
 installer for the integrated support!
 
 * After cloning the repo, open Visual Studio and instead of opening a project, select Open Folder, and navigate to the newly cloned repo.
