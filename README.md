@@ -62,3 +62,16 @@ installer for the integrated support!
 * After cloning the repo, open Visual Studio and instead of opening a project, select Open Folder, and navigate to the newly cloned repo.
 * You are now using VS2017 in a CMake environment. Some settings will have changed from what you may be used to. You should still be able to compile and run as usual. The runnable/debugable target should be called `benchmark`.
 
+## Compilation on Windows (using CMake-GUI)
+
+If you are using an earlier version of Visual Studio or something completely different,
+you can use cmake-gui to generate a visual studio project instead.
+
+It is recommended that you use the previous approach if at all possible.
+
+* After cloning the repo, open cmake-gui and pick it as the "source directory".
+* Create a folder named 'build' in the reposotiry root folder and select it as the "build destination".
+* Click the 'Configure' button and choose the build system you want to use.
+* Click generate.
+* Once finished, if you chose visual studio you will now have a Visual Studio Solution and a number of projects available to you in the build folder. To compile and debug you simply open the solution file in visual studio and work as per usual.
+* NOTE: AVOID changing settings directly in the solution or project files if they can instead be added into the CMake configurations.
