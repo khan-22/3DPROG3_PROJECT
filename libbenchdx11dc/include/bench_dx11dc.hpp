@@ -1,14 +1,14 @@
 #pragma once
 
-#ifndef BENCH_OPENGL_HPP
-#define BENCH_OPENGL_HPP
+#ifndef BENCH_DX11DC_HPP
+#define BENCH_DX11DC_HPP
 
 #include <bench_template.hpp>
 
-class BenchOpenGL : BenchTemplate {
+class BenchDX11DC : public BenchTemplate {
  public:
-  BenchOpenGL();
-  virtual ~BenchOpenGL();
+  BenchDX11DC();
+  virtual ~BenchDX11DC();
 
   virtual void initialize() final override;
   virtual void execute() final override;
@@ -16,4 +16,4 @@ class BenchOpenGL : BenchTemplate {
 
  private:
 };
-#endif  // BENCH_OPENGL_HPP
+#endif  // BENCH_DX11DC_HPP
