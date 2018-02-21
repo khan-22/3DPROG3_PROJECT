@@ -3,10 +3,20 @@ Our project in DV2551
 
 Members: Karl Hansson, Filip Pentikäinen, Peyman Torabi
 
-The aim of our project is to measure the driver overhead in different graphics 
+The aim of our project is to measure the driver overhead in different 
 APIs (Vulkan, together with most probably both DX11 and OpenGL) to determine
 how significant the difference may be during different stages of the program
-(initialization, transfer, execution, clean up, etc...).
+(initialization, transfer, execution, clean up, etc...). Since Vulkan claims
+to be low-overhead, we would expect to see that reflected in the data, assuming
+our tests are accurately representing reality. 
+
+We'd also hope to be able to draw
+some conclusions around what parts of the program that the different APIs
+have the most overhead. Since one of the strengths of Vulkan is that you have
+greater control over the creation of pipelines, we would expect the initialization part to
+take longer than the other APIs depending on how they choose to defer pipeline
+creation, while execution might be lower overhead for Vulkan. You may call this
+part of our _hypothesis_.
 
 We aim to do this by essentially implementing the same program multiple times as
 static libraries, one for each API, which can be executed from a single benchmark
