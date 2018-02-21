@@ -30,6 +30,7 @@ Compilation instructions using CMake
 
 * git
 * CMake 3.8.2 (or higher)
+* A c++ compiler with c++14 compatability
 
 ## Compilation on Linux
 
