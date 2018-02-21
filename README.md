@@ -22,3 +22,29 @@ forward-substitution is done on the GPU and backward-substitution on the CPU. It
 should also be a trivial task to make identical shader code across the APIs
 for a task such as this.
 
+# Instructions
+
+Compilation instructions using CMake
+
+## Prerequisites
+
+* git
+* CMake 3.8.2 (or higher)
+
+## Compilation on Linux
+
+* After cloning the repo, navigate into the created folder.
+* Make a new folder named 'build'.
+* Navigate into the build folder.
+* From the terminal, execute the command `cmake ..` to execute cmake
+* To compile, run `make`.
+* The executable is found in `build/benchmark/src/` (relative to repo root) and should be named `benchmark`.
+
+## Compilation on Windows (using Visual Studio 2017)
+
+Visual Studio 2017 comes with integrated CMake support which should make this process
+fairly simple.
+
+* After cloning the repo, open Visual Studio and instead of opening a project, select Open Folder, and navigate to the newly cloned repo.
+* You are now using VS2017 in a CMake environment. Some settings will have changed from what you may be used to. You should still be able to compile and run as usual. The runnable/debugable target should be called `benchmark`.
+
