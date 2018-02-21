@@ -38,8 +38,8 @@ Compilation instructions using CMake
 
 ## Prerequisites
 
-* <img src="https://git-scm.com/images/logos/logomark-orange@2x.png" alt="IMAGE ALT TEXT HERE" width="16" height="64" border="10" /> git
-* <img src="https://www.macupdate.com/images/icons256/49301.png" alt="IMAGE ALT TEXT HERE" width="64" height="16" border="10" /> CMake 3.8.2 (or higher)
+* <img src="https://git-scm.com/images/logos/logomark-orange@2x.png" alt="IMAGE ALT TEXT HERE" width="16" height="16" border="10" /> git
+* <img src="https://www.macupdate.com/images/icons256/49301.png" alt="IMAGE ALT TEXT HERE" width="16" height="16" border="10" /> CMake 3.8.2 (or higher)
 * A c++ compiler with c++14 compatability
 
 ## Compilation on Linux
