@@ -1,0 +1,3 @@
+[submodule "glbinding"]
+	path = libbenchopengl/thirdparty/glbinding
+	url = https://github.com/cginternals/glbinding.git
