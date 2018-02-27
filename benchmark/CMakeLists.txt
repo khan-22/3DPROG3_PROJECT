@@ -6,6 +6,6 @@ add_executable(${TARGET_NAME}
 
 target_link_libraries(${TARGET_NAME}
   PRIVATE
-    benchvulkan benchopengl benchdx11dc
+    benchvulkan benchopengl
 )
 
