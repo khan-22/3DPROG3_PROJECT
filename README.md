@@ -37,13 +37,13 @@ for a task such as this.
   * **Window Creation**
     * Both API's will be using the same window library (glfw). OpenGL context creation is mostly done by the help of this library, meanwhile most Vulkan initialization is done by hand.
   * **Resource Creation** 
-    * Create $2N$ shader modules with slightly differing source to avoid caching.
-    * Create $N$ Pipelines with the help of the previous shader modules.
+    * Create _2N_ shader modules with slightly differing source to avoid caching.
+    * Create _N_ Pipelines with the help of the previous shader modules.
   * **Drawing**
     * (In each test we have the ability to split the work into multiple threads on Vulkan).
-    * _"First Draw Test"_. Draw one triangle per pipeline ($N$ triangles). We expect the time we use a pipeline to be extra expensive due to the OpenGL deferring pipeline compilation, so we want a this to be a special data-point. 
-    * _"Second Draw Test"_. Draw $M$ triangles per pipeline ($N \cdot M$ triangles). Bind pipelines optimally.
-    * _"Third Draw Test"_. Draw $M$ triangles per pipeline ($N \cdot M$ triangles). Bind pipelines non-optimally.
+    * _"First Draw Test"_. Draw one triangle per pipeline (_N_ triangles). We expect the time we use a pipeline to be extra expensive due to the OpenGL deferring pipeline compilation, so we want a this to be a special data-point. 
+    * _"Second Draw Test"_. Draw _M_ triangles per pipeline (_N \cdot M_ triangles). Bind pipelines optimally.
+    * _"Third Draw Test"_. Draw _M_ triangles per pipeline (_N \cdot M_ triangles). Bind pipelines non-optimally.
   * **Clean Up**
     * No real thorough tests here. Mostly just time the shutdown I suppose.
 
