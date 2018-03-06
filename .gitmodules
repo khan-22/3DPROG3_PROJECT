@@ -1,3 +1,6 @@
 [submodule "glbinding"]
 	path = libbenchopengl/thirdparty/glbinding
 	url = https://github.com/cginternals/glbinding.git
+[submodule "thirdpartycommon/glfw"]
+	path = thirdpartycommon/glfw
+	url = https://github.com/glfw/glfw.git
