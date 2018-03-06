@@ -3,10 +3,10 @@ Our project in DV2551
 
 Members: Karl Hansson, Filip Pentikäinen, Peyman Torabi
 
-The aim of our project is to measure the driver overhead in different 
-APIs (Vulkan, together with most probably both DX11 and OpenGL) to determine
+The aim of our project is to measure the driver overhead in Vulkan, 
+as compared with OpenGL to determine
 how significant the difference may be during different stages of the program
-(initialization, transfer, execution, clean up, etc...). Since Vulkan claims
+(initialization, execution, clean up, etc...). Since Vulkan claims
 to be low-overhead, we would expect to see that reflected in the data, assuming
 our tests are accurately representing reality. 
 
@@ -31,6 +31,21 @@ to be done and synchronized. One such task could be Gaussian Elimination where
 forward-substitution is done on the GPU and backward-substitution on the CPU. It
 should also be a trivial task to make identical shader code across the APIs
 for a task such as this.
+
+# Test structure
+* **Initialization**
+  * **Window Creation**
+    * Both API's will be using the same window library (glfw). OpenGL context creation is mostly done by the help of this library, meanwhile most Vulkan initialization is done by hand.
+  * **Resource Creation** 
+    * Create $2N$ shader modules with slightly differing source to avoid caching.
+    * Create $N$ Pipelines with the help of the previous shader modules.
+  * **Drawing**
+    * (In each test we have the ability to split the work into multiple threads on Vulkan).
+    * _"First Draw Test"_. Draw one triangle per pipeline ($N$ triangles). We expect the time we use a pipeline to be extra expensive due to the OpenGL deferring pipeline compilation, so we want a this to be a special data-point. 
+    * _"Second Draw Test"_. Draw $M$ triangles per pipeline ($N \cdot M$ triangles). Bind pipelines optimally.
+    * _"Third Draw Test"_. Draw $M$ triangles per pipeline ($N \cdot M$ triangles). Bind pipelines non-optimally.
+  * **Clean Up**
+    * No real thorough tests here. Mostly just time the shutdown I suppose.
 
 # Instructions
 
