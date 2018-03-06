@@ -3,6 +3,8 @@
 #ifndef BENCH_TEMPLATE_HPP
 #define BENCH_TEMPLATE_HPP
 
+#include <string>
+
 class BenchTemplate {
  public:
   BenchTemplate(int numberOfThreads, int N, int M);
@@ -20,6 +22,10 @@ class BenchTemplate {
   virtual void clean_up() = 0;
 
  protected:
+  const int _WIDTH = 800;
+  const int _HEIGHT = 600;
+  const std::string _TITLE = "Benchmark";
+
   int _numberOfThreads;
   int _N;
   int _M;

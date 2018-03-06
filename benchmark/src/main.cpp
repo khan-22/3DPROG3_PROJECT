@@ -66,10 +66,12 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
 
       shaderModules.averageWith(results);
     }
+
+    benchmark->clean_up();
   }
 
-  std::cout << initialization << std::endl;
-  std::cout << shaderModules << std::endl;
+  // std::cout << initialization << std::endl;
+  // std::cout << shaderModules << std::endl;
 }
 
 //
@@ -95,9 +97,10 @@ int main() {
   // std::cout << r << std::endl;
 
   runBenchmark(BENCHMARK_TYPE::OPENGL);
+  runBenchmark(BENCHMARK_TYPE::VULKAN);
 
-  { BenchVulkan bv(1, 10, 10); }
-  { BenchOpenGL bo(1, 10, 10); }
+  // { BenchVulkan bv(1, 10, 10); }
+  // { BenchOpenGL bo(1, 10, 10); }
 
   std::cin.ignore();
   std::cin.get();

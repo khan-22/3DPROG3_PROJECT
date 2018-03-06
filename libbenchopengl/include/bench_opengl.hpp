@@ -5,6 +5,8 @@
 
 #include <bench_template.hpp>
 
+#include <GLFW/glfw3.h>
+
 class BenchOpenGL : public BenchTemplate {
  public:
   BenchOpenGL(int numberOfThreads, int N, int M);
@@ -21,6 +23,8 @@ class BenchOpenGL : public BenchTemplate {
 
   virtual void clean_up() final override;
 
- private:
+ private:  // Functions
+ private:  // Varibles
+  GLFWwindow* _window = nullptr;
 };
 #endif  // BENCH_OPENGL_HPP
