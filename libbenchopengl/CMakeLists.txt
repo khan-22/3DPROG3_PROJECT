@@ -25,4 +25,5 @@ target_link_libraries(${TARGET_NAME}
     template
   PRIVATE
     glbinding::glbinding
+    glfw
 )
