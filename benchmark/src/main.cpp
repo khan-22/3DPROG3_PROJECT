@@ -8,16 +8,15 @@
 
 int main() {
 #if defined(NDEBUG)
-	std::string build_config = "(RELEASE)";
+  std::string build_config = "(RELEASE)";
 #else
-	std::string build_config = "(DEBUG)";
+  std::string build_config = "(DEBUG)";
 #endif
 
   std::cout << "Running Benchmarks... " << build_config << std::endl;
 
-
-  { BenchVulkan bv; }
-  { BenchOpenGL bo; }
+  { BenchVulkan bv(1, 10, 10); }
+  { BenchOpenGL bo(1, 10, 10); }
 
   std::cin.ignore();
   std::cin.get();

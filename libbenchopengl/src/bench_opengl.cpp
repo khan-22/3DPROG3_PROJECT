@@ -7,7 +7,8 @@
 
 #include <GLFW/glfw3.h>
 
-BenchOpenGL::BenchOpenGL() : BenchTemplate() {
+BenchOpenGL::BenchOpenGL(int numberOfThreads, int N, int M)
+    : BenchTemplate(numberOfThreads, N, M) {
   //
   GLFWwindow* window = nullptr;
 
@@ -40,6 +41,11 @@ BenchOpenGL::~BenchOpenGL() {
 
 void BenchOpenGL::initialize() {}
 
-void BenchOpenGL::execute() {}
+void BenchOpenGL::createShaderModules() {}
+void BenchOpenGL::createPipelines() {}
+
+void BenchOpenGL::firstDraw() {}
+void BenchOpenGL::secondDraw() {}
+void BenchOpenGL::thirdDraw() {}
 
 void BenchOpenGL::clean_up() {}

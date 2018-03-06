@@ -5,12 +5,24 @@
 
 class BenchTemplate {
  public:
-  BenchTemplate();
+  BenchTemplate(int numberOfThreads, int N, int M);
   virtual ~BenchTemplate();
 
   virtual void initialize() = 0;
-  virtual void execute() = 0;
+
+  virtual void createShaderModules() = 0;
+  virtual void createPipelines() = 0;
+
+  virtual void firstDraw() = 0;
+  virtual void secondDraw() = 0;
+  virtual void thirdDraw() = 0;
+
   virtual void clean_up() = 0;
+
+ protected:
+  int _numberOfThreads;
+  int _N;
+  int _M;
 
  private:
 };
