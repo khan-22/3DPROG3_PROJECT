@@ -17,3 +17,9 @@ target_link_libraries(${TARGET_NAME}
     Vulkan::Vulkan
     glfw
 )
+
+target_compile_definitions(${TARGET_NAME}
+  PUBLIC
+    VULKAN_HPP_NO_EXCEPTIONS
+    VULKAN_HPP_NO_SMART_HANDLE
+)
