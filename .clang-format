@@ -10,6 +10,7 @@ PointerAlignment: Left
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
+AlignOperands: true
 AlignEscapedNewlines: Left
 AlignTrailingComments: true
 AllowShortBlocksOnASingleLine: false
@@ -20,6 +21,7 @@ AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 
+BreakBeforeBinaryOperators: None
 
 BinPackArguments: false
 BinPackParameters: false
