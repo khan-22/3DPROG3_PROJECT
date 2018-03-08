@@ -31,6 +31,8 @@ void BenchVulkan::initialize() {
   makePhysicalDevice();
   makeDevice();
   makeSwapchain();
+  makeRenderPass();
+  makeFramebuffers();
 }
 
 void BenchVulkan::createShaderModules() {
@@ -49,6 +51,12 @@ void BenchVulkan::thirdDraw() {
 }
 
 void BenchVulkan::clean_up() {
+  for (auto& framebuffer : _swapchainContext.framebuffers) {
+    _deviceContext.device.destroyFramebuffer(framebuffer);
+  }
+
+  _deviceContext.device.destroyRenderPass(_renderContext.renderPass);
+
   for (auto& imageView : _swapchainContext.imageViews) {
     _deviceContext.device.destroyImageView(imageView);
   }
@@ -412,6 +420,77 @@ void BenchVulkan::makeSwapchain() {
 
     _swapchainContext.imageViews.push_back(imageView);
   }
+}
+
+void BenchVulkan::makeRenderPass() {
+  vk::AttachmentDescription colorAttachment = {};
+  colorAttachment.format                    = _swapchainContext.imageFormat;
+  colorAttachment.samples                   = vk::SampleCountFlagBits::e1;
+  colorAttachment.loadOp                    = vk::AttachmentLoadOp::eClear;
+  colorAttachment.storeOp                   = vk::AttachmentStoreOp::eStore;
+  colorAttachment.stencilLoadOp             = vk::AttachmentLoadOp::eDontCare;
+  colorAttachment.stencilStoreOp            = vk::AttachmentStoreOp::eDontCare;
+  colorAttachment.initialLayout             = vk::ImageLayout::eUndefined;
+  colorAttachment.finalLayout               = vk::ImageLayout::ePresentSrcKHR;
+
+  vk::AttachmentReference colorAttachmentRef = {};
+  colorAttachmentRef.attachment              = 0;
+  colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
+
+  // Do we need a subpass? Tutorial doesn't say if it is mandatory to have at
+  // least one or not.
+  vk::SubpassDescription subpass = {};
+  subpass.pipelineBindPoint      = vk::PipelineBindPoint::eGraphics;
+  subpass.colorAttachmentCount   = 1;
+  subpass.pColorAttachments      = &colorAttachmentRef;
+
+  vk::SubpassDependency dependency;
+  dependency.srcSubpass =
+      VK_SUBPASS_EXTERNAL;       // Refers to the implicit subpass before
+                                 // the render pass.
+  dependency.dstSubpass    = 0;  // Refers to our subpass
+  dependency.srcStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+  dependency.srcAccessMask = vk::AccessFlags();  // None specified
+  dependency.dstStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+  dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead |
+                             vk::AccessFlagBits::eColorAttachmentWrite;
+
+  // Finally create the renderpass
+  vk::RenderPassCreateInfo renderPassInfo = {};
+  renderPassInfo.attachmentCount          = 1;
+  renderPassInfo.pAttachments             = &colorAttachment;
+  renderPassInfo.subpassCount             = 1;
+  renderPassInfo.pSubpasses               = &subpass;
+  renderPassInfo.dependencyCount          = 1;
+  renderPassInfo.pDependencies            = &dependency;
+
+  CRITICAL(_deviceContext.device.createRenderPass(
+               &renderPassInfo, nullptr, &_renderContext.renderPass),
+           "createRenderPass");
+}
+
+void BenchVulkan::makeFramebuffers() {
+  // Create framebuffers
+  _swapchainContext.framebuffers.resize(_swapchainContext.imageViews.size());
+
+  for (size_t i = 0; i < _swapchainContext.imageViews.size(); i++) {
+    vk::ImageView attachments[] = {_swapchainContext.imageViews[i]};
+
+    vk::FramebufferCreateInfo framebufferInfo;
+    framebufferInfo.renderPass      = _renderContext.renderPass;
+    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.pAttachments    = attachments;
+    framebufferInfo.width           = _swapchainContext.extent.width;
+    framebufferInfo.height          = _swapchainContext.extent.height;
+    framebufferInfo.layers          = 1;
+
+    CRITICAL(_deviceContext.device.createFramebuffer(
+                 &framebufferInfo, nullptr, &_swapchainContext.framebuffers[i]),
+             "createFramebuffer");
+  }
+}
+
+void BenchVulkan::makeCommandPool() {
 }
 
 //

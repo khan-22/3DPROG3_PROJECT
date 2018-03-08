@@ -37,6 +37,9 @@ class BenchVulkan : public BenchTemplate {
   void makePhysicalDevice();
   void makeDevice();
   void makeSwapchain();
+  void makeRenderPass();
+  void makeFramebuffers();
+  void makeCommandPool();
 
   static VKAPI_ATTR VkBool32 VKAPI_CALL
                              debugCallback(VkDebugReportFlagsEXT      flags,
