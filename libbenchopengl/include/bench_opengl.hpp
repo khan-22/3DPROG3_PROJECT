@@ -12,16 +12,18 @@ class BenchOpenGL : public BenchTemplate {
   BenchOpenGL(int numberOfThreads, int N, int M);
   virtual ~BenchOpenGL();
 
-  virtual void initialize() final override;
+  virtual void initialize(ResultCollection& resultCollection) final override;
 
-  virtual void createShaderModules() final override;
-  virtual void createPipelines() final override;
+  virtual void createShaderModules(
+      ResultCollection& resultCollection) final override;
+  virtual void createPipelines(
+      ResultCollection& resultCollection) final override;
 
-  virtual void firstDraw() final override;
-  virtual void secondDraw() final override;
-  virtual void thirdDraw() final override;
+  virtual void firstDraw(ResultCollection& resultCollection) final override;
+  virtual void secondDraw(ResultCollection& resultCollection) final override;
+  virtual void thirdDraw(ResultCollection& resultCollection) final override;
 
-  virtual void clean_up() final override;
+  virtual void clean_up(ResultCollection& resultCollection) final override;
 
  private:  // Functions
  private:  // Varibles

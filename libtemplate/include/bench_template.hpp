@@ -5,21 +5,23 @@
 
 #include <string>
 
+#include "result_collection.hpp"
+
 class BenchTemplate {
  public:
   BenchTemplate(int numberOfThreads, int N, int M);
   virtual ~BenchTemplate();
 
-  virtual void initialize() = 0;
+  virtual void initialize(ResultCollection& resultCollection) = 0;
 
-  virtual void createShaderModules() = 0;
-  virtual void createPipelines()     = 0;
+  virtual void createShaderModules(ResultCollection& resultCollection) = 0;
+  virtual void createPipelines(ResultCollection& resultCollection)     = 0;
 
-  virtual void firstDraw()  = 0;
-  virtual void secondDraw() = 0;
-  virtual void thirdDraw()  = 0;
+  virtual void firstDraw(ResultCollection& resultCollection)  = 0;
+  virtual void secondDraw(ResultCollection& resultCollection) = 0;
+  virtual void thirdDraw(ResultCollection& resultCollection)  = 0;
 
-  virtual void clean_up() = 0;
+  virtual void clean_up(ResultCollection& resultCollection) = 0;
 
  protected:
   const uint32_t    _WIDTH  = 800;

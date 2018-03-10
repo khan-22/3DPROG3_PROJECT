@@ -13,10 +13,14 @@
 // Helper class
 struct Timer {
   double time;
-  void   start();
+  void   start(std::string columnHead);
   void   stop();
 
+  const std::string& getColumnHead() const;
+
  private:
+  std::string _columnhead;
+
   Time _start;
   Time _end;
 };
@@ -30,9 +34,10 @@ struct ResultCollection {
   void addResult(Timer t);
 
   void averageWith(ResultCollection& resultCollection);
+  void nextIteration();
 
  private:
-  std::vector<Timer> _results;
+  std::vector<std::vector<Timer>> _results;
 
   int _averageWeight = 1;
 

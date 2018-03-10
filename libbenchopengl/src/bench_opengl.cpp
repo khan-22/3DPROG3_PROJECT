@@ -18,36 +18,41 @@ BenchOpenGL::~BenchOpenGL() {
   std::cout << "Finished OpenGL Benchmark" << std::endl;
 }
 
-void BenchOpenGL::initialize() {
+void BenchOpenGL::initialize(ResultCollection& resultCollection) {
   if (!glfwInit()) {
     std::exit(EXIT_FAILURE);
   }
 
+  Timer t;
+  t.start("Window");
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
   _window = glfwCreateWindow(_WIDTH, _HEIGHT, _TITLE.c_str(), nullptr, nullptr);
   glfwMakeContextCurrent(_window);
+  t.stop();
+  resultCollection.addResult(t);
+
   glbinding::Binding::initialize();
 }
 
-void BenchOpenGL::createShaderModules() {
+void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
 }
 
-void BenchOpenGL::createPipelines() {
+void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 }
 
-void BenchOpenGL::firstDraw() {
+void BenchOpenGL::firstDraw(ResultCollection& resultCollection) {
 }
 
-void BenchOpenGL::secondDraw() {
+void BenchOpenGL::secondDraw(ResultCollection& resultCollection) {
 }
 
-void BenchOpenGL::thirdDraw() {
+void BenchOpenGL::thirdDraw(ResultCollection& resultCollection) {
 }
 
-void BenchOpenGL::clean_up() {
+void BenchOpenGL::clean_up(ResultCollection& resultCollection) {
   glfwDestroyWindow(_window);
   glfwTerminate();  //
 }

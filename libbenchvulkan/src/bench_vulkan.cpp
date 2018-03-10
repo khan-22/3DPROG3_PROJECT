@@ -14,45 +14,88 @@ BenchVulkan::~BenchVulkan() {
   std::cout << "Finished Vulkan Benchmark" << std::endl;
 }
 
-void BenchVulkan::initialize() {
+void BenchVulkan::initialize(ResultCollection& resultCollection) {
   if (!glfwInit()) {
     std::exit(EXIT_FAILURE);
   }
 
+  Timer t;
+  t.start("Window");
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
   _window = glfwCreateWindow(_WIDTH, _HEIGHT, _TITLE.c_str(), nullptr, nullptr);
   glfwMakeContextCurrent(_window);
+  t.stop();
+  resultCollection.addResult(t);
 
+  t.start("Instance");
   makeInstance();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("DebugCallback");
   makeDebugCallback();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Surface");
   makeSurface();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("PhysicalDevice");
   makePhysicalDevice();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Device");
   makeDevice();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Swapchain");
   makeSwapchain();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("RenderPass");
   makeRenderPass();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Framebuffers");
   makeFramebuffers();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("CommandPool");
   makeCommandPool();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("CommandBuffers");
   makeCommandBuffers();
+  t.stop();
+  resultCollection.addResult(t);
 }
 
-void BenchVulkan::createShaderModules() {
+void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
 }
 
-void BenchVulkan::createPipelines() {
+void BenchVulkan::createPipelines(ResultCollection& resultCollection) {
 }
 
-void BenchVulkan::firstDraw() {
+void BenchVulkan::firstDraw(ResultCollection& resultCollection) {
 }
 
-void BenchVulkan::secondDraw() {
+void BenchVulkan::secondDraw(ResultCollection& resultCollection) {
 }
 
-void BenchVulkan::thirdDraw() {
+void BenchVulkan::thirdDraw(ResultCollection& resultCollection) {
 }
 
-void BenchVulkan::clean_up() {
+void BenchVulkan::clean_up(ResultCollection& resultCollection) {
   _deviceContext.device.freeCommandBuffers(_renderContext.commandPool,
                                            _renderContext.commandBuffers);
 
@@ -164,7 +207,7 @@ void BenchVulkan::makePhysicalDevice() {
       _instance.enumeratePhysicalDevices().value[0];
 
   // for (auto& availableDevice : _instance.enumeratePhysicalDevices().value) {
-  std::cout << availableDevice.getProperties().deviceName << std::endl;
+  // std::cout << availableDevice.getProperties().deviceName << std::endl;
 
   vk::PhysicalDeviceProperties properties = availableDevice.getProperties();
 
