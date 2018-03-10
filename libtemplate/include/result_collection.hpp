@@ -13,8 +13,8 @@
 // Helper class
 struct Timer {
   double time;
-  void start();
-  void stop();
+  void   start();
+  void   stop();
 
  private:
   Time _start;
