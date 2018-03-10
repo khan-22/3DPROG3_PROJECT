@@ -70,7 +70,7 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
     benchmark->clean_up();
   }
 
-  // std::cout << initialization << std::endl;
+  std::cout << initialization << std::endl;
   // std::cout << shaderModules << std::endl;
 }
 

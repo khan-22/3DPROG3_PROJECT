@@ -40,6 +40,7 @@ class BenchVulkan : public BenchTemplate {
   void makeRenderPass();
   void makeFramebuffers();
   void makeCommandPool();
+  void makeCommandBuffers();
 
   static VKAPI_ATTR VkBool32 VKAPI_CALL
                              debugCallback(VkDebugReportFlagsEXT      flags,

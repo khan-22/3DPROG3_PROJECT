@@ -33,6 +33,8 @@ void BenchVulkan::initialize() {
   makeSwapchain();
   makeRenderPass();
   makeFramebuffers();
+  makeCommandPool();
+  makeCommandBuffers();
 }
 
 void BenchVulkan::createShaderModules() {
@@ -51,6 +53,11 @@ void BenchVulkan::thirdDraw() {
 }
 
 void BenchVulkan::clean_up() {
+  _deviceContext.device.freeCommandBuffers(_renderContext.commandPool,
+                                           _renderContext.commandBuffers);
+
+  _deviceContext.device.destroyCommandPool(_renderContext.commandPool);
+
   for (auto& framebuffer : _swapchainContext.framebuffers) {
     _deviceContext.device.destroyFramebuffer(framebuffer);
   }
@@ -491,6 +498,26 @@ void BenchVulkan::makeFramebuffers() {
 }
 
 void BenchVulkan::makeCommandPool() {
+  vk::CommandPoolCreateInfo poolInfo;
+  poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+  poolInfo.queueFamilyIndex = _deviceContext.queueIndices[GRAPHICS];
+
+  CRITICAL(_deviceContext.device.createCommandPool(
+               &poolInfo, nullptr, &_renderContext.commandPool),
+           "createCommandPool");
+}
+
+void BenchVulkan::makeCommandBuffers() {
+  vk::CommandBufferAllocateInfo allocInfo;
+  allocInfo.commandPool = _renderContext.commandPool;
+  allocInfo.level       = vk::CommandBufferLevel::ePrimary;
+  allocInfo.commandBufferCount =
+      static_cast<uint32_t>(_swapchainContext.framebuffers.size());
+
+  _renderContext.commandBuffers.resize(_swapchainContext.framebuffers.size());
+
+  _deviceContext.device.allocateCommandBuffers(
+      &allocInfo, _renderContext.commandBuffers.data());
 }
 
 //
