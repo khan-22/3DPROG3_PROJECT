@@ -38,6 +38,7 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
 }
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
+  auto sourcePair = loadShaderSource();
 }
 
 void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {

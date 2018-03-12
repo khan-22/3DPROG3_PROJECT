@@ -40,7 +40,7 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
   for (int i = 0; i < BENCHMARK_OUTER_RUNS; i++) {
     // Initialization
     {
-      ResultCollection results;
+      // ResultCollection results;
 
       Timer timer;
       timer.start("Total");
@@ -54,15 +54,17 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
 
     // shaderModules
     {
-      ResultCollection results;
+      // ResultCollection results;
 
-      for (int j = 0; j < BENCHMARK_N; j++) {
-        Timer timer;
-        timer.start("Total");
-        benchmark->createShaderModules(results);
-        timer.stop();
-        results.addResult(timer);
-      }
+      // for (int j = 0; j < BENCHMARK_N; j++) {
+      Timer timer;
+      timer.start("Total");
+      benchmark->createShaderModules(shaderModules);
+      timer.stop();
+      // results.addResult(timer);
+      // }
+
+      shaderModules.addResult(timer);
 
       // shaderModules.averageWith(results);
     }
@@ -80,10 +82,11 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
     }
 
     initialization.nextIteration();
+    shaderModules.nextIteration();
   }
 
   std::cout << initialization << std::endl;
-  // std::cout << shaderModules << std::endl;
+  std::cout << shaderModules << std::endl;
 }
 
 //

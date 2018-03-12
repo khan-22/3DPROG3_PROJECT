@@ -4,6 +4,7 @@
 #define BENCH_TEMPLATE_HPP
 
 #include <string>
+#include <utility>
 
 #include "result_collection.hpp"
 
@@ -23,7 +24,10 @@ class BenchTemplate {
 
   virtual void clean_up(ResultCollection& resultCollection) = 0;
 
- protected:
+ protected:  // Functions
+  std::pair<std::string, std::string> loadShaderSource();
+
+ protected:  // Variables
   const uint32_t    _WIDTH  = 800;
   const uint32_t    _HEIGHT = 600;
   const std::string _TITLE  = "Benchmark";

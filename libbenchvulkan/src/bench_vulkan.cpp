@@ -81,6 +81,7 @@ void BenchVulkan::initialize(ResultCollection& resultCollection) {
 }
 
 void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
+  auto sourcePair = loadShaderSource();
 }
 
 void BenchVulkan::createPipelines(ResultCollection& resultCollection) {
