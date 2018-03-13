@@ -21,6 +21,9 @@ class BenchVulkan : public BenchTemplate {
 
   virtual void initialize(ResultCollection& resultCollection) final override;
 
+  virtual void createTriangles(
+      ResultCollection& resultCollection) final override;
+
   virtual void createShaderModules(
       ResultCollection& resultCollection) final override;
   virtual void createPipelines(
@@ -98,6 +101,12 @@ class BenchVulkan : public BenchTemplate {
 
   vk::PipelineLayout _pipelineLayout;
   vk::DescriptorPool _descriptorPool;
+
+  struct Triangle {
+    vk::Buffer       buffer;
+    vk::DeviceMemory memory;
+  };
+  std::array<Triangle, BENCHMARK_N> _vertexbuffers;
 
   std::array<std::pair<vk::ShaderModule, vk::ShaderModule>, BENCHMARK_N>
       _shaderModules;

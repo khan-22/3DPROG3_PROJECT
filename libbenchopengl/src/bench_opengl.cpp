@@ -39,6 +39,10 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
   glbinding::Binding::initialize();
 }
 
+void BenchOpenGL::createTriangles(ResultCollection& resultCollection) {
+  //
+}
+
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
   auto sourcePair = loadShaderSource();
 
