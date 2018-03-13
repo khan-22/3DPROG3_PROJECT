@@ -99,6 +99,11 @@ class BenchVulkan : public BenchTemplate {
   vk::PipelineLayout _pipelineLayout;
   vk::DescriptorPool _descriptorPool;
 
+  std::array<std::pair<vk::ShaderModule, vk::ShaderModule>, BENCHMARK_N>
+      _shaderModules;
+
+  std::array<vk::Pipeline, BENCHMARK_N> _pipelines;
+
   std::vector<const char*> _instanceExtensions = {
 #if USE_VALIDATION_LAYERS
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME  // Remove when not in debug later

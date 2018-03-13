@@ -26,6 +26,7 @@ class BenchTemplate {
 
  protected:  // Functions
   std::pair<std::string, std::string> loadShaderSource();
+  std::string                         getNextDefine();
 
  protected:  // Variables
   const uint32_t    _WIDTH  = 800;

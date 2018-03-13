@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 
 BenchTemplate::BenchTemplate(int numberOfThreads, int N, int M)
     : _numberOfThreads(numberOfThreads), _N(N), _M(M) {
@@ -32,4 +33,13 @@ std::pair<std::string, std::string> BenchTemplate::loadShaderSource() {
   }
 
   return {v_shaderText, f_shaderText};
+}
+
+std::string BenchTemplate::getNextDefine() {
+  double r = static_cast<double>(rand() % 255) / 255;
+  double g = static_cast<double>(rand() % 255) / 255;
+  double b = static_cast<double>(rand() % 255) / 255;
+
+  return {"#version 450\n\n#define COLOR1 " + std::to_string(r) + "," +
+          std::to_string(g) + "," + std::to_string(b) + "\n\n"};
 }

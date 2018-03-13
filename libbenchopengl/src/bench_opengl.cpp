@@ -19,6 +19,8 @@ BenchOpenGL::~BenchOpenGL() {
 }
 
 void BenchOpenGL::initialize(ResultCollection& resultCollection) {
+  srand(0);
+
   if (!glfwInit()) {
     std::exit(EXIT_FAILURE);
   }
@@ -39,6 +41,10 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
   auto sourcePair = loadShaderSource();
+
+  auto one = getNextDefine();
+  one      = getNextDefine();
+  one      = getNextDefine();
 }
 
 void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {

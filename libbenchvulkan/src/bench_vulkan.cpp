@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <shaderc/shaderc.hpp>
+
 //
 BenchVulkan::BenchVulkan(int numberOfThreads, int N, int M)
     : BenchTemplate(numberOfThreads, N, M) {
@@ -15,6 +17,8 @@ BenchVulkan::~BenchVulkan() {
 }
 
 void BenchVulkan::initialize(ResultCollection& resultCollection) {
+  srand(0);
+
   if (!glfwInit()) {
     std::exit(EXIT_FAILURE);
   }
@@ -81,7 +85,94 @@ void BenchVulkan::initialize(ResultCollection& resultCollection) {
 }
 
 void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
+  Timer t;
+  t.start("Loading");
   auto sourcePair = loadShaderSource();
+  t.stop();
+  resultCollection.addResult(t);
+
+  shaderc::Compiler       compiler;
+  shaderc::CompileOptions options;
+
+  for (auto& shaderPair : _shaderModules) {
+    auto sourcePairCopy = sourcePair;
+
+    auto header          = getNextDefine();
+    sourcePairCopy.first = header + sourcePair.first;
+
+    auto vPreResult =
+        compiler.PreprocessGlsl(sourcePairCopy.first,
+                                shaderc_shader_kind::shaderc_vertex_shader,
+                                "vertex",
+                                options);
+
+    if (vPreResult.GetCompilationStatus() !=
+        shaderc_compilation_status_success) {
+      std::cerr << "ERROR PREPROCESSING SHADER" << std::endl;
+      std::exit(EXIT_FAILURE);
+    }
+
+    // std::cout << std::string{vPreResult.cbegin(), vPreResult.cend()}
+    //           << std::endl;
+
+    auto fPreResult =
+        compiler.PreprocessGlsl(sourcePairCopy.second,
+                                shaderc_shader_kind::shaderc_fragment_shader,
+                                "fragment",
+                                options);
+
+    if (fPreResult.GetCompilationStatus() !=
+        shaderc_compilation_status_success) {
+      std::cerr << "ERROR PREPROCESSING SHADER" << std::endl;
+      std::exit(EXIT_FAILURE);
+    }
+
+    auto vSpirvResult =
+        compiler.CompileGlslToSpv({vPreResult.cbegin(), vPreResult.cend()},
+                                  shaderc_shader_kind::shaderc_vertex_shader,
+                                  "vertex",
+                                  options);
+
+    if (vSpirvResult.GetCompilationStatus() !=
+        shaderc_compilation_status_success) {
+      std::cerr << "ERROR COMPILING SHADER" << std::endl;
+      std::exit(EXIT_FAILURE);
+    }
+
+    auto fSpirvResult =
+        compiler.CompileGlslToSpv({fPreResult.cbegin(), fPreResult.cend()},
+                                  shaderc_shader_kind::shaderc_fragment_shader,
+                                  "fragment",
+                                  options);
+
+    if (fSpirvResult.GetCompilationStatus() !=
+        shaderc_compilation_status_success) {
+      std::cerr << "ERROR COMPILING SHADER" << std::endl;
+      std::exit(EXIT_FAILURE);
+    }
+
+    std::pair<std::vector<uint32_t>, std::vector<uint32_t>> spirvPair = {
+        {vSpirvResult.cbegin(), vSpirvResult.cend()},
+        {fSpirvResult.cbegin(), fSpirvResult.cend()}};
+
+    vk::ShaderModuleCreateInfo vShaderInfo;
+    vShaderInfo.codeSize = spirvPair.first.size() * sizeof(spirvPair.first[0]);
+    vShaderInfo.pCode =
+        reinterpret_cast<const uint32_t*>(spirvPair.first.data());
+
+    vk::ShaderModuleCreateInfo fShaderInfo;
+    fShaderInfo.codeSize =
+        spirvPair.second.size() * sizeof(spirvPair.second[0]);
+    fShaderInfo.pCode =
+        reinterpret_cast<const uint32_t*>(spirvPair.second.data());
+
+    CRITICAL(_deviceContext.device.createShaderModule(
+                 &vShaderInfo, nullptr, &shaderPair.first),
+             "createShaderModule");
+    CRITICAL(_deviceContext.device.createShaderModule(
+                 &fShaderInfo, nullptr, &shaderPair.second),
+             "createShaderModule");
+  }
 }
 
 void BenchVulkan::createPipelines(ResultCollection& resultCollection) {
@@ -97,6 +188,11 @@ void BenchVulkan::thirdDraw(ResultCollection& resultCollection) {
 }
 
 void BenchVulkan::clean_up(ResultCollection& resultCollection) {
+  for (auto& shaderModule : _shaderModules) {
+    _deviceContext.device.destroyShaderModule(shaderModule.first);
+    _deviceContext.device.destroyShaderModule(shaderModule.second);
+  }
+
   _deviceContext.device.freeCommandBuffers(_renderContext.commandPool,
                                            _renderContext.commandBuffers);
 
