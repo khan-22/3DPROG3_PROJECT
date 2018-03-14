@@ -40,11 +40,19 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
 }
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
+  Timer t;
+  t.start("Loading");
   auto sourcePair = loadShaderSource();
+  t.stop();
+  resultCollection.addResult(t);
+
+  
 
   auto one = getNextDefine();
   one      = getNextDefine();
   one      = getNextDefine();
+
+  
 }
 
 void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
