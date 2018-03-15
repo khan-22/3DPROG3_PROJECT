@@ -14,7 +14,13 @@ class BenchOpenGL : public BenchTemplate {
 
   virtual void initialize(ResultCollection& resultCollection) final override;
 
-  virtual void createTriangles(
+  virtual void createTrianglesHost(
+      ResultCollection& resultCollection) final override;
+  virtual void createTrianglesSlow(
+      ResultCollection& resultCollection) final override;
+  virtual void createTrianglesSmart(
+      ResultCollection& resultCollection) final override;
+  virtual void createTrianglesFast(
       ResultCollection& resultCollection) final override;
 
   virtual void createShaderModules(

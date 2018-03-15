@@ -21,7 +21,13 @@ class BenchVulkan : public BenchTemplate {
 
   virtual void initialize(ResultCollection& resultCollection) final override;
 
-  virtual void createTriangles(
+  virtual void createTrianglesHost(
+      ResultCollection& resultCollection) final override;
+  virtual void createTrianglesSlow(
+      ResultCollection& resultCollection) final override;
+  virtual void createTrianglesSmart(
+      ResultCollection& resultCollection) final override;
+  virtual void createTrianglesFast(
       ResultCollection& resultCollection) final override;
 
   virtual void createShaderModules(
@@ -47,6 +53,39 @@ class BenchVulkan : public BenchTemplate {
   void makeCommandPool();
   void makeCommandBuffers();
 
+  void thread_createTrianglesHost(int startIndex,
+                                  int endIndex,
+                                  int threadIndex);
+  void thread_createTrianglesSlow(int startIndex,
+                                  int endIndex,
+                                  int threadIndex);
+  void thread_createTrianglesSmart(int startIndex,
+                                   int endIndex,
+                                   int threadIndex);
+  void thread_createTrianglesFast(int startIndex,
+                                  int endIndex,
+                                  int threadIndex);
+
+  void thread_createShaderModules(
+      int                                        startIndex,
+      int                                        endIndex,
+      int                                        threadIndex,
+      const std::pair<std::string, std::string>& sourcePair);
+
+  uint32_t findMemoryType(uint32_t                typeFilter,
+                          vk::MemoryPropertyFlags properties);
+
+  std::pair<vk::Buffer, vk::DeviceMemory> getNewBuffer(
+      vk::DeviceSize          size,
+      vk::BufferUsageFlags    usage,
+      vk::MemoryPropertyFlags properties);
+
+  vk::CommandBuffer getTransferCommandBuffer(int threadIdx);
+
+  void copyBufferOnce(vk::Buffer     srcBuffer,
+                      vk::Buffer     dstBuffer,
+                      vk::DeviceSize size);
+
   static VKAPI_ATTR VkBool32 VKAPI_CALL
                              debugCallback(VkDebugReportFlagsEXT      flags,
                                            VkDebugReportObjectTypeEXT objType,
@@ -66,10 +105,9 @@ class BenchVulkan : public BenchTemplate {
   vk::DebugReportCallbackEXT _callback;
 
   struct DeviceContext {
-    vk::PhysicalDevice                           physicalDevice;
-    vk::Device                                   device;
-    std::array<vk::Queue, QueueType::NUM_QUEUES> queues;
-    std::array<int, QueueType::NUM_QUEUES>       queueIndices;
+    vk::PhysicalDevice                     physicalDevice;
+    vk::Device                             device;
+    std::array<int, QueueType::NUM_QUEUES> queueIndices;
 
     vk::SurfaceKHR                    surface;
     vk::SurfaceCapabilitiesKHR        surfaceCapabilities;
@@ -86,19 +124,26 @@ class BenchVulkan : public BenchTemplate {
     vk::Extent2D                 extent;
   } _swapchainContext;
 
-  struct RenderContext {
-    vk::RenderPass                 renderPass;
+  struct ThreadContext {
+    // std::array<vk::CommandPool, QueueType::NUM_QUEUES> commandPool;
     vk::CommandPool                commandPool;
     std::vector<vk::CommandBuffer> commandBuffers;
     vk::CommandBuffer*             currentCommandBuffer;
-    vk::Semaphore                  imageAvailableSemaphore;
-    vk::Semaphore                  renderFinishedSemaphore;
-    uint32_t                       currentSwapChainImageIndex;
+    vk::Queue                      queue;
+  };
+  std::vector<ThreadContext> _threadContexts;
+
+  struct RenderContext {
+    vk::RenderPass renderPass;
+    vk::Semaphore  imageAvailableSemaphore;
+    vk::Semaphore  renderFinishedSemaphore;
+    uint32_t       currentSwapChainImageIndex;
   } _renderContext;
 
   // std::unordered_map<int, vk::DescriptorSetLayout> _descriptorSetLayouts;
   // std::unordered_map<int, int> _descriptorLocationToIndexMap;
 
+  // vk::Queue          _presentQueue;
   vk::PipelineLayout _pipelineLayout;
   vk::DescriptorPool _descriptorPool;
 
@@ -106,7 +151,10 @@ class BenchVulkan : public BenchTemplate {
     vk::Buffer       buffer;
     vk::DeviceMemory memory;
   };
-  std::array<Triangle, BENCHMARK_N> _vertexbuffers;
+  std::array<Triangle, BENCHMARK_N> _trianglesHost;
+  std::array<Triangle, BENCHMARK_N> _trianglesSlow;
+  std::array<Triangle, BENCHMARK_N> _trianglesSmart;
+  std::array<Triangle, BENCHMARK_N> _trianglesFast;
 
   std::array<std::pair<vk::ShaderModule, vk::ShaderModule>, BENCHMARK_N>
       _shaderModules;
