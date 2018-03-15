@@ -35,28 +35,21 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
 
   glbinding::Binding::initialize();
 
-  //TODO: NEED TO TIME THESE FOLLOWING FUNCTIONS
+
   createShaderModules(resultCollection);
   createPipelines(resultCollection);
 }
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
-  //TODO: Add timers
-  //Timer t;
-  //t.start("Loading");
   auto sourcePairOriginal = loadShaderSource();
-  //t.stop();
-  //resultCollection.addResult(t);
+ 
 
   for (auto &shaderPair : shaderPairArr)
   {
 	  auto shaderPairCopy  = sourcePairOriginal;
 	  auto define		   = getNextDefine();
 	  shaderPairCopy.first = define + shaderPairCopy.first; //Add random defines (colors) to the top of the VS
-	  shaderPair = shaderPairCopy;
-	  //std::pair<gl::GLchar* const*, gl::GLchar* const*> test;
-	  //test.first = shaderPairCopy.first;
-	  //test.second = shaderPairCopy.second;
+	  shaderPair		   = shaderPairCopy;
   }
 
 }
@@ -67,21 +60,12 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 	{
 		const char *src;
 		GLuint VS, FS;
-		VS = gl::glCreateShader(gl::GLenum::GL_VERTEX_SHADER);
+		VS	= gl::glCreateShader(gl::GLenum::GL_VERTEX_SHADER);
 		src = shaderPairArr[i].first.c_str();
 		gl::glShaderSource(VS, 1, &src, NULL);
 		gl::glCompileShader(VS);
 
-		//Temporary
-		int  success;
-		gl::glGetShaderiv(VS, gl::GLenum::GL_COMPILE_STATUS, &success);
-		if (!success)
-		{
-			printf("\n\nERROR COMPILING VS SHADER\n\n");
-		}
-		//
-
-		FS = gl::glCreateShader(gl::GLenum::GL_FRAGMENT_SHADER);
+		FS	= gl::glCreateShader(gl::GLenum::GL_FRAGMENT_SHADER);
 		src = shaderPairArr[i].second.c_str();
 		gl::glShaderSource(FS, 1, &src, NULL);
 		gl::glCompileShader(FS);
@@ -93,6 +77,7 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 		gl::glLinkProgram(shaderProgram);
 
 		//Temporary
+		int  success;
 		gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
 		if (!success)
 		{
