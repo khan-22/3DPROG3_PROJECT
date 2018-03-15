@@ -1,6 +1,3 @@
-#include <glbinding/Binding.h>
-#include <glbinding/gl/gl.h>
-
 #include "bench_opengl.hpp"
 
 #include <iostream>
@@ -40,19 +37,20 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
 }
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
-  Timer t;
-  t.start("Loading");
-  auto sourcePair = loadShaderSource();
-  t.stop();
-  resultCollection.addResult(t);
+  //TODO: Add timers
+  //Timer t;
+  //t.start("Loading");
+  auto sourcePairOriginal = loadShaderSource();
+  //t.stop();
+  //resultCollection.addResult(t);
 
-  
+  for (auto &shaderPair : shaderPairArr)
+  {
+	  auto shaderPairCopy  = sourcePairOriginal;
+	  auto define		   = getNextDefine();
+	  shaderPairCopy.first = define + shaderPairCopy.first; //Add random defines (colors) to the top of the VS
+  }
 
-  auto one = getNextDefine();
-  one      = getNextDefine();
-  one      = getNextDefine();
-
-  
 }
 
 void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
