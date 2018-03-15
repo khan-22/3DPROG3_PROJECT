@@ -20,6 +20,9 @@ class BenchOpenGL : public BenchTemplate {
 
   virtual void initialize(ResultCollection& resultCollection) final override;
 
+  virtual void createTriangles(
+      ResultCollection& resultCollection) final override;
+
   virtual void createShaderModules(
       ResultCollection& resultCollection) final override;
   virtual void createPipelines(

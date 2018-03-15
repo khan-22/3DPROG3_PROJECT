@@ -108,7 +108,8 @@ void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
 
     if (vPreResult.GetCompilationStatus() !=
         shaderc_compilation_status_success) {
-      std::cerr << "ERROR PREPROCESSING SHADER\n" << vPreResult.GetErrorMessage() << std::endl;
+      std::cerr << "ERROR PREPROCESSING SHADER\n"
+                << vPreResult.GetErrorMessage() << std::endl;
       std::exit(EXIT_FAILURE);
     }
 
@@ -123,7 +124,8 @@ void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
 
     if (fPreResult.GetCompilationStatus() !=
         shaderc_compilation_status_success) {
-      std::cerr << "ERROR PREPROCESSING SHADER\n" << fPreResult.GetErrorMessage() << std::endl;
+      std::cerr << "ERROR PREPROCESSING SHADER\n"
+                << fPreResult.GetErrorMessage() << std::endl;
       std::exit(EXIT_FAILURE);
     }
 
@@ -135,7 +137,8 @@ void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
 
     if (vSpirvResult.GetCompilationStatus() !=
         shaderc_compilation_status_success) {
-			std::cerr << "ERROR COMPILING SHADER\n" << vSpirvResult.GetErrorMessage() << std::endl;
+      std::cerr << "ERROR COMPILING SHADER\n"
+                << vSpirvResult.GetErrorMessage() << std::endl;
       std::exit(EXIT_FAILURE);
     }
 
@@ -147,7 +150,8 @@ void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
 
     if (fSpirvResult.GetCompilationStatus() !=
         shaderc_compilation_status_success) {
-      std::cerr << "ERROR COMPILING SHADER\n" << fSpirvResult.GetErrorMessage() << std::endl;
+      std::cerr << "ERROR COMPILING SHADER\n"
+                << fSpirvResult.GetErrorMessage() << std::endl;
       std::exit(EXIT_FAILURE);
     }
 
@@ -173,6 +177,10 @@ void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
                  &fShaderInfo, nullptr, &shaderPair.second),
              "createShaderModule");
   }
+}
+
+void BenchVulkan::createTriangles(ResultCollection& resultCollection) {
+  //
 }
 
 void BenchVulkan::createPipelines(ResultCollection& resultCollection) {

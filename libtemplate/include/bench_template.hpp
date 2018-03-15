@@ -15,6 +15,8 @@ class BenchTemplate {
 
   virtual void initialize(ResultCollection& resultCollection) = 0;
 
+  virtual void createTriangles(ResultCollection& resultCollection) = 0;
+
   virtual void createShaderModules(ResultCollection& resultCollection) = 0;
   virtual void createPipelines(ResultCollection& resultCollection)     = 0;
 

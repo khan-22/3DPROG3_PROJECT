@@ -40,6 +40,10 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
   createPipelines(resultCollection);
 }
 
+void BenchOpenGL::createTriangles(ResultCollection& resultCollection) {
+  //
+}
+
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
   auto sourcePairOriginal = loadShaderSource();
  
