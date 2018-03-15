@@ -40,7 +40,19 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
   createPipelines(resultCollection);
 }
 
-void BenchOpenGL::createTriangles(ResultCollection& resultCollection) {
+void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
+  //
+}
+
+void BenchOpenGL::createTrianglesSlow(ResultCollection& resultCollection) {
+  //
+}
+
+void BenchOpenGL::createTrianglesSmart(ResultCollection& resultCollection) {
+  //
+}
+
+void BenchOpenGL::createTrianglesFast(ResultCollection& resultCollection) {
   //
 }
 

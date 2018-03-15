@@ -8,6 +8,10 @@
 
 #include "result_collection.hpp"
 
+struct Vertex {
+  float x, y, z;
+};
+
 class BenchTemplate {
  public:
   BenchTemplate(int numberOfThreads, int N, int M);
@@ -15,7 +19,10 @@ class BenchTemplate {
 
   virtual void initialize(ResultCollection& resultCollection) = 0;
 
-  virtual void createTriangles(ResultCollection& resultCollection) = 0;
+  virtual void createTrianglesHost(ResultCollection& resultCollection)  = 0;
+  virtual void createTrianglesSlow(ResultCollection& resultCollection)  = 0;
+  virtual void createTrianglesSmart(ResultCollection& resultCollection) = 0;
+  virtual void createTrianglesFast(ResultCollection& resultCollection)  = 0;
 
   virtual void createShaderModules(ResultCollection& resultCollection) = 0;
   virtual void createPipelines(ResultCollection& resultCollection)     = 0;
@@ -29,6 +36,7 @@ class BenchTemplate {
  protected:  // Functions
   std::pair<std::string, std::string> loadShaderSource();
   std::string                         getNextDefine();
+  std::array<Vertex, 3>               getNextTriangle();
 
  protected:  // Variables
   const uint32_t    _WIDTH  = 800;

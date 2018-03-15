@@ -1,6 +1,8 @@
 #include "bench_vulkan.hpp"
 
 #include <iostream>
+#include <thread>
+#include <mutex>
 
 #include <shaderc/shaderc.hpp>
 
@@ -10,6 +12,8 @@ BenchVulkan::BenchVulkan(int numberOfThreads, int N, int M)
   //
   std::cout << "Started Vulkan Benchmark... (" << numberOfThreads << ", " << N
             << ", " << M << ")" << std::endl;
+
+  _threadContexts.resize(numberOfThreads);
 }
 
 BenchVulkan::~BenchVulkan() {
@@ -84,18 +88,384 @@ void BenchVulkan::initialize(ResultCollection& resultCollection) {
   resultCollection.addResult(t);
 }
 
-void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
-  Timer t;
-  t.start("Loading");
-  auto sourcePair = loadShaderSource();
-  t.stop();
-  resultCollection.addResult(t);
+void BenchVulkan::thread_createTrianglesHost(int startIndex,
+                                             int endIndex,
+                                             int threadIndex) {
+  const size_t size = 3 * sizeof(Vertex);
 
+  for (int i = startIndex; i < endIndex; i++) {
+    Triangle& triangle = _trianglesHost[i];
+
+    auto bufferAndMemory =
+        getNewBuffer(size,
+                     vk::BufferUsageFlagBits::eVertexBuffer,
+                     vk::MemoryPropertyFlagBits::eHostVisible |
+                         vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    triangle.buffer = bufferAndMemory.first;
+    triangle.memory = bufferAndMemory.second;
+
+    void* mappedMemory;
+    CRITICAL(
+        _deviceContext.device.mapMemory(
+            triangle.memory, 0, size, vk::MemoryMapFlagBits(), &mappedMemory),
+        "mapMemory");
+    memcpy(mappedMemory, getNextTriangle().data(), size);
+    _deviceContext.device.unmapMemory(triangle.memory);
+  }
+}
+
+void BenchVulkan::createTrianglesHost(ResultCollection& resultCollection) {
+  const int TRI_PER_THREAD = _trianglesHost.size() / _numberOfThreads;
+  int       startIndex     = 0;
+  int       endIndex       = TRI_PER_THREAD;
+
+  std::vector<std::thread> threads;
+  threads.reserve(_numberOfThreads - 1);
+  for (int i = 0; i < _numberOfThreads - 1; i++) {
+    threads.emplace_back(&BenchVulkan::thread_createTrianglesHost,
+                         this,
+                         startIndex,
+                         endIndex,
+                         i);
+
+    startIndex += TRI_PER_THREAD;
+    endIndex += TRI_PER_THREAD;
+  }
+
+  thread_createTrianglesHost(
+      startIndex, _trianglesHost.size(), _numberOfThreads);
+
+  for (auto& thread : threads) {
+    thread.join();
+  }
+}
+
+void BenchVulkan::thread_createTrianglesSlow(int startIndex,
+                                             int endIndex,
+                                             int threadIndex) {
+  const size_t size = 3 * sizeof(Vertex);
+
+  for (int i = startIndex; i < endIndex; i++) {
+    Triangle& triangle = _trianglesSlow[i];
+
+    auto stagingBufferAndMemory =
+        getNewBuffer(size,
+                     vk::BufferUsageFlagBits::eTransferSrc,
+                     vk::MemoryPropertyFlagBits::eHostVisible |
+                         vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    void* mappedMemory;
+    CRITICAL(_deviceContext.device.mapMemory(stagingBufferAndMemory.second,
+                                             0,
+                                             size,
+                                             vk::MemoryMapFlagBits(0),
+                                             &mappedMemory),
+             "mapMemory");
+    memcpy(mappedMemory, getNextTriangle().data(), size);
+    _deviceContext.device.unmapMemory(stagingBufferAndMemory.second);
+
+    auto bufferAndMemory =
+        getNewBuffer(size,
+                     vk::BufferUsageFlagBits::eVertexBuffer |
+                         vk::BufferUsageFlagBits::eTransferDst,
+                     vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+    triangle.buffer = bufferAndMemory.first;
+    triangle.memory = bufferAndMemory.second;
+
+    vk::CommandBuffer commandBuffer = getTransferCommandBuffer(threadIndex);
+
+    vk::CommandBufferBeginInfo beginInfo;
+    beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+
+    commandBuffer.begin(beginInfo);
+    vk::BufferCopy copyRegion;
+    copyRegion.srcOffset = 0;
+    copyRegion.dstOffset = 0;
+    copyRegion.size      = size;
+    commandBuffer.copyBuffer(
+        stagingBufferAndMemory.first, bufferAndMemory.first, copyRegion);
+    commandBuffer.end();
+
+    vk::SubmitInfo submitInfo;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers    = &commandBuffer;
+
+    _threadContexts[threadIndex].queue.submit(submitInfo, nullptr);
+    _threadContexts[threadIndex].queue.waitIdle();
+
+    _deviceContext.device.freeCommandBuffers(
+        _threadContexts[threadIndex].commandPool, commandBuffer);
+
+    _deviceContext.device.destroyBuffer(stagingBufferAndMemory.first);
+    _deviceContext.device.freeMemory(stagingBufferAndMemory.second);
+  }
+}
+
+void BenchVulkan::createTrianglesSlow(ResultCollection& resultCollection) {
+  const int TRI_PER_THREAD = _trianglesSlow.size() / _numberOfThreads;
+  int       startIndex     = 0;
+  int       endIndex       = TRI_PER_THREAD;
+
+  std::vector<std::thread> threads;
+  threads.reserve(_numberOfThreads - 1);
+  for (int i = 0; i < _numberOfThreads - 1; i++) {
+    threads.emplace_back(&BenchVulkan::thread_createTrianglesSlow,
+                         this,
+                         startIndex,
+                         endIndex,
+                         i);
+
+    startIndex += TRI_PER_THREAD;
+    endIndex += TRI_PER_THREAD;
+  }
+
+  thread_createTrianglesSlow(
+      startIndex, _trianglesSlow.size(), _numberOfThreads - 1);
+
+  for (auto& thread : threads) {
+    thread.join();
+  }
+}
+
+void BenchVulkan::thread_createTrianglesSmart(int startIndex,
+                                              int endIndex,
+                                              int threadIndex) {
+  const size_t size = 3 * sizeof(Vertex);
+
+  int                                                    current = 0;
+  std::array<vk::CommandBuffer, 3>                       commandChain;
+  std::array<vk::Fence, 3>                               fenceChain;
+  std::array<std::pair<vk::Buffer, vk::DeviceMemory>, 3> stagingChain;
+  for (auto& commandBuffer : commandChain) {
+    commandBuffer = getTransferCommandBuffer(threadIndex);
+  }
+
+  for (auto& fence : fenceChain) {
+    vk::FenceCreateInfo fenceInfo;
+
+    CRITICAL(_deviceContext.device.createFence(&fenceInfo, nullptr, &fence),
+             "createFence");
+
+    _deviceContext.device.resetFences(fence);
+  }
+
+  for (auto& staging : stagingChain) {
+    staging = getNewBuffer(size,
+                           vk::BufferUsageFlagBits::eTransferSrc,
+                           vk::MemoryPropertyFlagBits::eHostVisible |
+                               vk::MemoryPropertyFlagBits::eHostCoherent);
+  }
+
+  bool hasRunOnce = false;
+  for (int i = startIndex; i < endIndex; i++) {
+    current %= commandChain.size();
+    if (current == 0 && i != startIndex) {
+      hasRunOnce = true;
+    }
+
+    vk::Fence&         currentFence         = fenceChain[current];
+    vk::CommandBuffer& currentCommandBuffer = commandChain[current];
+    vk::Buffer&        currentStagingBuffer = stagingChain[current].first;
+    vk::DeviceMemory&  currentStagingMemory = stagingChain[current++].second;
+    Triangle&          triangle             = _trianglesSmart[i];
+
+    if (hasRunOnce) {
+      _deviceContext.device.waitForFences(
+          currentFence, true, std::numeric_limits<uint32_t>::max());
+    }
+
+    void* mappedMemory;
+    CRITICAL(_deviceContext.device.mapMemory(currentStagingMemory,
+                                             0,
+                                             size,
+                                             vk::MemoryMapFlagBits(0),
+                                             &mappedMemory),
+             "mapMemory");
+    memcpy(mappedMemory, getNextTriangle().data(), size);
+    _deviceContext.device.unmapMemory(currentStagingMemory);
+
+    auto bufferAndMemory =
+        getNewBuffer(size,
+                     vk::BufferUsageFlagBits::eVertexBuffer |
+                         vk::BufferUsageFlagBits::eTransferDst,
+                     vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+    triangle.buffer = bufferAndMemory.first;
+    triangle.memory = bufferAndMemory.second;
+
+    vk::CommandBufferBeginInfo beginInfo;
+    beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+
+    currentCommandBuffer.begin(beginInfo);
+    vk::BufferCopy copyRegion;
+    copyRegion.srcOffset = 0;
+    copyRegion.dstOffset = 0;
+    copyRegion.size      = size;
+    currentCommandBuffer.copyBuffer(
+        currentStagingBuffer, bufferAndMemory.first, copyRegion);
+    currentCommandBuffer.end();
+
+    vk::SubmitInfo submitInfo;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers    = &currentCommandBuffer;
+
+    _threadContexts[threadIndex].queue.submit(submitInfo, currentFence);
+  }
+
+  _threadContexts[threadIndex].queue.waitIdle();
+
+  for (auto& commandBuffer : commandChain) {
+    _deviceContext.device.freeCommandBuffers(
+        _threadContexts[threadIndex].commandPool, commandBuffer);
+  }
+
+  for (auto& fence : fenceChain) {
+    _deviceContext.device.destroyFence(fence);
+  }
+
+  for (auto& staging : stagingChain) {
+    _deviceContext.device.destroyBuffer(staging.first);
+    _deviceContext.device.freeMemory(staging.second);
+  }
+}
+
+void BenchVulkan::createTrianglesSmart(ResultCollection& resultCollection) {
+  const int TRI_PER_THREAD = _trianglesSmart.size() / _numberOfThreads;
+  int       startIndex     = 0;
+  int       endIndex       = TRI_PER_THREAD;
+
+  std::vector<std::thread> threads;
+  threads.reserve(_numberOfThreads - 1);
+  for (int i = 0; i < _numberOfThreads - 1; i++) {
+    threads.emplace_back(&BenchVulkan::thread_createTrianglesSmart,
+                         this,
+                         startIndex,
+                         endIndex,
+                         i);
+
+    startIndex += TRI_PER_THREAD;
+    endIndex += TRI_PER_THREAD;
+  }
+
+  thread_createTrianglesSmart(
+      startIndex, _trianglesSmart.size(), _numberOfThreads - 1);
+
+  for (auto& thread : threads) {
+    thread.join();
+  }
+}
+
+void BenchVulkan::thread_createTrianglesFast(int startIndex,
+                                             int endIndex,
+                                             int threadIndex) {
+  const size_t size = 3 * sizeof(Vertex);
+
+  std::vector<std::pair<vk::Buffer, vk::DeviceMemory>> stagings;
+  stagings.reserve(endIndex - startIndex);
+
+  for (int i = startIndex; i < endIndex; i++) {
+    Triangle& triangle = _trianglesFast[i];
+
+    auto stagingBufferAndMemory =
+        getNewBuffer(size,
+                     vk::BufferUsageFlagBits::eTransferSrc,
+                     vk::MemoryPropertyFlagBits::eHostVisible |
+                         vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    void* mappedMemory;
+    CRITICAL(_deviceContext.device.mapMemory(stagingBufferAndMemory.second,
+                                             0,
+                                             size,
+                                             vk::MemoryMapFlagBits(0),
+                                             &mappedMemory),
+             "mapMemory");
+    memcpy(mappedMemory, getNextTriangle().data(), size);
+    _deviceContext.device.unmapMemory(stagingBufferAndMemory.second);
+
+    stagings.push_back(stagingBufferAndMemory);
+
+    auto bufferAndMemory =
+        getNewBuffer(size,
+                     vk::BufferUsageFlagBits::eVertexBuffer |
+                         vk::BufferUsageFlagBits::eTransferDst,
+                     vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+    triangle.buffer = bufferAndMemory.first;
+    triangle.memory = bufferAndMemory.second;
+  }
+
+  vk::CommandBuffer commandBuffer = getTransferCommandBuffer(threadIndex);
+
+  vk::CommandBufferBeginInfo beginInfo;
+  beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+
+  commandBuffer.begin(beginInfo);
+  vk::BufferCopy copyRegion;
+  copyRegion.srcOffset = 0;
+  copyRegion.dstOffset = 0;
+  copyRegion.size      = size;
+
+  for (int i = startIndex; i < endIndex; i++) {
+    commandBuffer.copyBuffer(
+        stagings[i - startIndex].first, _trianglesFast[i].buffer, copyRegion);
+  }
+  commandBuffer.end();
+
+  vk::SubmitInfo submitInfo;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers    = &commandBuffer;
+
+  _threadContexts[threadIndex].queue.submit(submitInfo, nullptr);
+  _threadContexts[threadIndex].queue.waitIdle();
+
+  _deviceContext.device.freeCommandBuffers(
+      _threadContexts[threadIndex].commandPool, commandBuffer);
+
+  for (auto& staging : stagings) {
+    _deviceContext.device.destroyBuffer(staging.first);
+    _deviceContext.device.freeMemory(staging.second);
+  }
+}
+
+void BenchVulkan::createTrianglesFast(ResultCollection& resultCollection) {
+  const int TRI_PER_THREAD = _trianglesHost.size() / _numberOfThreads;
+  int       startIndex     = 0;
+  int       endIndex       = TRI_PER_THREAD;
+
+  std::vector<std::thread> threads;
+  threads.reserve(_numberOfThreads - 1);
+  for (int i = 0; i < _numberOfThreads - 1; i++) {
+    threads.emplace_back(&BenchVulkan::thread_createTrianglesFast,
+                         this,
+                         startIndex,
+                         endIndex,
+                         i);
+
+    startIndex += TRI_PER_THREAD;
+    endIndex += TRI_PER_THREAD;
+  }
+
+  thread_createTrianglesFast(
+      startIndex, _trianglesHost.size(), _numberOfThreads - 1);
+
+  for (auto& thread : threads) {
+    thread.join();
+  }
+}
+
+void BenchVulkan::thread_createShaderModules(
+    int                                        startIndex,
+    int                                        endIndex,
+    int                                        threadIndex,
+    const std::pair<std::string, std::string>& sourcePair) {
   shaderc::Compiler       compiler;
   shaderc::CompileOptions options;
 
-  for (auto& shaderPair : _shaderModules) {
-    auto sourcePairCopy = sourcePair;
+  for (int i = startIndex; i < endIndex; i++) {
+    auto& shaderPair     = _shaderModules[i];
+    auto  sourcePairCopy = sourcePair;
 
     auto header          = getNextDefine();
     sourcePairCopy.first = header + sourcePair.first;
@@ -179,8 +549,37 @@ void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
   }
 }
 
-void BenchVulkan::createTriangles(ResultCollection& resultCollection) {
-  //
+void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
+  Timer t;
+  t.start("Loading");
+  auto sourcePair = loadShaderSource();
+  t.stop();
+  resultCollection.addResult(t);
+
+  const int SHADER_PER_THREAD = _shaderModules.size() / _numberOfThreads;
+  int       startIndex        = 0;
+  int       endIndex          = SHADER_PER_THREAD;
+
+  std::vector<std::thread> threads;
+  threads.reserve(_numberOfThreads - 1);
+  for (int i = 0; i < _numberOfThreads - 1; i++) {
+    threads.emplace_back(&BenchVulkan::thread_createShaderModules,
+                         this,
+                         startIndex,
+                         endIndex,
+                         i,
+                         sourcePair);
+
+    startIndex += SHADER_PER_THREAD;
+    endIndex += SHADER_PER_THREAD;
+  }
+
+  thread_createShaderModules(
+      startIndex, _trianglesHost.size(), _numberOfThreads - 1, sourcePair);
+
+  for (auto& thread : threads) {
+    thread.join();
+  }
 }
 
 void BenchVulkan::createPipelines(ResultCollection& resultCollection) {
@@ -201,10 +600,31 @@ void BenchVulkan::clean_up(ResultCollection& resultCollection) {
     _deviceContext.device.destroyShaderModule(shaderModule.second);
   }
 
-  _deviceContext.device.freeCommandBuffers(_renderContext.commandPool,
-                                           _renderContext.commandBuffers);
+  for (auto& triangle : _trianglesFast) {
+    _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
+    _deviceContext.device.freeMemory(triangle.memory, nullptr);
+  }
+  for (auto& triangle : _trianglesSlow) {
+    _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
+    _deviceContext.device.freeMemory(triangle.memory, nullptr);
+  }
+  for (auto& triangle : _trianglesSmart) {
+    _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
+    _deviceContext.device.freeMemory(triangle.memory, nullptr);
+  }
+  for (auto& triangle : _trianglesHost) {
+    _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
+    _deviceContext.device.freeMemory(triangle.memory, nullptr);
+  }
 
-  _deviceContext.device.destroyCommandPool(_renderContext.commandPool);
+  for (auto& threadContext : _threadContexts) {
+    _deviceContext.device.freeCommandBuffers(threadContext.commandPool,
+                                             threadContext.commandBuffers);
+
+    _deviceContext.device.destroyCommandPool(threadContext.commandPool);
+    // _deviceContext.device.destroyCommandPool(
+    //     threadContext.commandPool[TRANSFER]);
+  }
 
   for (auto& framebuffer : _swapchainContext.framebuffers) {
     _deviceContext.device.destroyFramebuffer(framebuffer);
@@ -317,20 +737,30 @@ void BenchVulkan::makePhysicalDevice() {
   vk::PhysicalDeviceProperties properties = availableDevice.getProperties();
 
   auto queueFamilies = availableDevice.getQueueFamilyProperties();
-  for (int i = 0; i < queueFamilies.size(); i++) {
-    if (graphicsQueueIndex == -1 &&
-        queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) {
-      graphicsQueueIndex = i;
-      if (availableDevice.getSurfaceSupportKHR(i, _deviceContext.surface)
-              .value) {
-        presentQueueIndex = i;
-      }
-    }
+  if (queueFamilies[0].queueFlags == vk::QueueFlagBits(15) &&
+      queueFamilies[0].queueCount == 16) {
+    graphicsQueueIndex = 0;
+    presentQueueIndex  = 0;
+    transferQueueIndex = 0;
 
-    if ((transferQueueIndex == -1 ||
-         transferQueueIndex == graphicsQueueIndex) &&
-        queueFamilies[i].queueFlags & vk::QueueFlagBits::eTransfer) {
-      transferQueueIndex = i;
+    // We need to call this...
+    availableDevice.getSurfaceSupportKHR(0, _deviceContext.surface);
+
+  } else {
+    for (int i = 0; i < queueFamilies.size(); i++) {
+      if (graphicsQueueIndex == -1 &&
+          queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+        graphicsQueueIndex = i;
+        if (availableDevice.getSurfaceSupportKHR(i, _deviceContext.surface)
+                .value) {
+          presentQueueIndex = i;
+        }
+      }
+      if ((transferQueueIndex == -1 ||
+           transferQueueIndex == graphicsQueueIndex) &&
+          queueFamilies[i].queueFlags & vk::QueueFlagBits::eTransfer) {
+        transferQueueIndex = i;
+      }
     }
   }
 
@@ -358,31 +788,37 @@ void BenchVulkan::makePhysicalDevice() {
 //
 //
 void BenchVulkan::makeDevice() {
-  float queuePriorities[QueueType::NUM_QUEUES] = {1.0f};
+  float queuePriorities[QueueType::NUM_QUEUES * 32] = {1.0f};
 
   struct QueueConstruct {
     std::vector<QueueType> types;
     int                    family = 0;
     int                    count  = 0;
   };
-  std::vector<QueueConstruct>            queueConstructs = {};
-  std::vector<vk::DeviceQueueCreateInfo> queueInfos      = {};
+  std::array<QueueConstruct, 1> queueConstructs;
+  queueConstructs[0].family = 0;
+  queueConstructs[0].count  = _numberOfThreads;
+  // queueConstructs[1].family = 1;
+  // queueConstructs[1].count  = 1;
 
-  for (int i = 0; i < QueueType::NUM_QUEUES; i++) {
-    bool already_exists = false;
+  // std::vector<QueueConstruct>            queueConstructs = {};
+  std::vector<vk::DeviceQueueCreateInfo> queueInfos = {};
 
-    for (auto& queueConstruct : queueConstructs) {
-      if (queueConstruct.family == _deviceContext.queueIndices[i]) {
-        already_exists = true;
-        queueConstruct.count++;
-        queueConstruct.types.push_back(static_cast<QueueType>(i));
-      }
-    }
-    if (!already_exists) {
-      queueConstructs.push_back(
-          {{static_cast<QueueType>(i)}, _deviceContext.queueIndices[i], 1});
-    }
-  }
+  // for (int i = 0; i < QueueType::NUM_QUEUES; i++) {
+  //   bool already_exists = false;
+
+  //   for (auto& queueConstruct : queueConstructs) {
+  //     if (queueConstruct.family == _deviceContext.queueIndices[i]) {
+  //       already_exists = true;
+  //       queueConstruct.count++;
+  //       queueConstruct.types.push_back(static_cast<QueueType>(i));
+  //     }
+  //   }
+  //   if (!already_exists) {
+  //     queueConstructs.push_back(
+  //         {{static_cast<QueueType>(i)}, _deviceContext.queueIndices[i], 1});
+  //   }
+  // }
 
   for (auto& queueConstruct : queueConstructs) {
     vk::DeviceQueueCreateInfo queueCreateInfo = {};
@@ -413,12 +849,24 @@ void BenchVulkan::makeDevice() {
                &deviceInfo, nullptr, &_deviceContext.device),
            "createDevice");
 
-  for (auto& queueConstruct : queueConstructs) {
-    for (int i = 0; i < queueConstruct.types.size(); i++) {
-      _deviceContext.queues[queueConstruct.types[i]] =
-          _deviceContext.device.getQueue(queueConstruct.family, i);
-    }
+  for (int i = 0; i < _threadContexts.size(); i++) {
+    _threadContexts[i].queue = _deviceContext.device.getQueue(0, i);
   }
+
+  // _presentQueue = _deviceContext.device.getQueue(1, 0);
+
+  // for (auto& threadContext : _threadContexts) {
+  //   int t = 0;
+  //   for (auto& queueConstruct : queueConstructs) {
+  //     for (int i = 0; i < queueConstruct.types.size(); i++) {
+  //       threadContext.queues[queueConstruct.types[i]] =
+  //           _deviceContext.device.getQueue(queueConstruct.family,
+  //                                          i + queueConstruct.types.size() *
+  //                                          t);
+  //     }
+  //   }
+  //   t++;
+  // }
 }
 
 //
@@ -646,26 +1094,123 @@ void BenchVulkan::makeFramebuffers() {
 }
 
 void BenchVulkan::makeCommandPool() {
-  vk::CommandPoolCreateInfo poolInfo;
-  poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-  poolInfo.queueFamilyIndex = _deviceContext.queueIndices[GRAPHICS];
+  for (auto& threadContext : _threadContexts) {
+    vk::CommandPoolCreateInfo poolInfo;
+    poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    poolInfo.queueFamilyIndex = 0;
 
-  CRITICAL(_deviceContext.device.createCommandPool(
-               &poolInfo, nullptr, &_renderContext.commandPool),
-           "createCommandPool");
+    CRITICAL(_deviceContext.device.createCommandPool(
+                 &poolInfo, nullptr, &threadContext.commandPool),
+             "createCommandPool");
+
+    // vk::CommandPoolCreateInfo poolInfo;
+    // poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    // poolInfo.queueFamilyIndex = _deviceContext.queueIndices[GRAPHICS];
+
+    // CRITICAL(_deviceContext.device.createCommandPool(
+    //              &poolInfo, nullptr, &threadContext.commandPool[GRAPHICS]),
+    //          "createCommandPool");
+
+    // vk::CommandPoolCreateInfo transferPoolInfo;
+    // transferPoolInfo.flags =
+    // vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    // transferPoolInfo.queueFamilyIndex =
+    // _deviceContext.queueIndices[TRANSFER];
+
+    // CRITICAL(
+    //     _deviceContext.device.createCommandPool(
+    //         &transferPoolInfo, nullptr,
+    //         &threadContext.commandPool[TRANSFER]),
+    //     "createCommandPool");
+  }
 }
 
 void BenchVulkan::makeCommandBuffers() {
+  for (auto& threadContext : _threadContexts) {
+    vk::CommandBufferAllocateInfo allocInfo;
+    allocInfo.commandPool = threadContext.commandPool;
+    allocInfo.level       = vk::CommandBufferLevel::ePrimary;
+    allocInfo.commandBufferCount =
+        static_cast<uint32_t>(_swapchainContext.framebuffers.size());
+
+    threadContext.commandBuffers.resize(_swapchainContext.framebuffers.size());
+
+    _deviceContext.device.allocateCommandBuffers(
+        &allocInfo, threadContext.commandBuffers.data());
+  }
+}
+
+uint32_t BenchVulkan::findMemoryType(uint32_t                typeFilter,
+                                     vk::MemoryPropertyFlags properties) {
+  vk::PhysicalDeviceMemoryProperties memProperties;
+  _deviceContext.physicalDevice.getMemoryProperties(&memProperties);
+
+  for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+    if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags &
+                                    properties) == properties) {
+      return i;
+    }
+  }
+
+  // throw std::runtime_error("failed to find suitable memory type!");
+  std::exit(EXIT_FAILURE);
+  return 0;
+}
+
+// std::mutex bufMutex;
+
+std::pair<vk::Buffer, vk::DeviceMemory> BenchVulkan::getNewBuffer(
+    vk::DeviceSize          size,
+    vk::BufferUsageFlags    usage,
+    vk::MemoryPropertyFlags properties) {
+  //
+  std::pair<vk::Buffer, vk::DeviceMemory> result;
+
+  // bufMutex.lock();
+
+  vk::BufferCreateInfo bufferInfo;
+  bufferInfo.size        = size;
+  bufferInfo.usage       = usage;  // vk::BufferUsageFlagBits::eVertexBuffer;
+  bufferInfo.sharingMode = vk::SharingMode::eExclusive;
+
+  CRITICAL(
+      _deviceContext.device.createBuffer(&bufferInfo, nullptr, &result.first),
+      "createBuffer");
+
+  vk::MemoryRequirements memReq;
+  _deviceContext.device.getBufferMemoryRequirements(result.first, &memReq);
+
+  vk::MemoryAllocateInfo allocInfo;
+  allocInfo.allocationSize  = memReq.size;
+  allocInfo.memoryTypeIndex = findMemoryType(memReq.memoryTypeBits, properties);
+
+  CRITICAL(
+      _deviceContext.device.allocateMemory(&allocInfo, nullptr, &result.second),
+      "allocateMemory");
+  _deviceContext.device.bindBufferMemory(result.first, result.second, 0);
+
+  // std::cout << "Thread " << std::this_thread::get_id()
+  //           << " says Buffer is: " << result.first << std::endl;
+
+  return result;
+}
+
+vk::CommandBuffer BenchVulkan::getTransferCommandBuffer(int threadIndex) {
   vk::CommandBufferAllocateInfo allocInfo;
-  allocInfo.commandPool = _renderContext.commandPool;
-  allocInfo.level       = vk::CommandBufferLevel::ePrimary;
-  allocInfo.commandBufferCount =
-      static_cast<uint32_t>(_swapchainContext.framebuffers.size());
+  allocInfo.level              = vk::CommandBufferLevel::ePrimary;
+  allocInfo.commandPool        = _threadContexts[threadIndex].commandPool;
+  allocInfo.commandBufferCount = 1;
 
-  _renderContext.commandBuffers.resize(_swapchainContext.framebuffers.size());
+  vk::CommandBuffer commandBuffer;
+  _deviceContext.device.allocateCommandBuffers(&allocInfo, &commandBuffer);
 
-  _deviceContext.device.allocateCommandBuffers(
-      &allocInfo, _renderContext.commandBuffers.data());
+  return commandBuffer;
+}
+
+void BenchVulkan::copyBufferOnce(vk::Buffer     srcBuffer,
+                                 vk::Buffer     dstBuffer,
+                                 vk::DeviceSize size) {
+  // vk::CommandBuffer commandBuffer = getTransferCommandBuffer();
 }
 
 //

@@ -27,10 +27,14 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
   if (benchmarkType == BENCHMARK_TYPE::OPENGL) {
     benchmark.reset(new BenchOpenGL(1, 10, 10));
   } else if (benchmarkType == BENCHMARK_TYPE::VULKAN) {
-    benchmark.reset(new BenchVulkan(1, 10, 10));
+    benchmark.reset(new BenchVulkan(2, 10, 10));
   }
 
   ResultCollection initialization;
+  ResultCollection trianglesHost;
+  ResultCollection trianglesSlow;
+  ResultCollection trianglesSmart;
+  ResultCollection trianglesFast;
   ResultCollection shaderModules;
   ResultCollection pipelines;
   ResultCollection firstDraw;
@@ -50,6 +54,46 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
       initialization.addResult(timer);
 
       // initialization.averageWith(results);
+    }
+
+    // Triangles Host
+    {
+      Timer timer;
+      timer.start("Total");
+      benchmark->createTrianglesHost(trianglesHost);
+      timer.stop();
+
+      trianglesHost.addResult(timer);
+    }
+
+    // Triangles Slow
+    {
+      Timer timer;
+      timer.start("Total");
+      benchmark->createTrianglesSlow(trianglesSlow);
+      timer.stop();
+
+      trianglesSlow.addResult(timer);
+    }
+
+    // Triangles Smart
+    {
+      Timer timer;
+      timer.start("Total");
+      benchmark->createTrianglesSmart(trianglesSmart);
+      timer.stop();
+
+      trianglesSmart.addResult(timer);
+    }
+
+    // Triangles Fast
+    {
+      Timer timer;
+      timer.start("Total");
+      benchmark->createTrianglesFast(trianglesFast);
+      timer.stop();
+
+      trianglesFast.addResult(timer);
     }
 
     // shaderModules
@@ -82,10 +126,18 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
     }
 
     initialization.nextIteration();
+    trianglesHost.nextIteration();
+    trianglesSlow.nextIteration();
+    trianglesSmart.nextIteration();
+    trianglesFast.nextIteration();
     shaderModules.nextIteration();
   }
 
   std::cout << initialization << std::endl;
+  std::cout << trianglesHost << std::endl;
+  std::cout << trianglesSlow << std::endl;
+  std::cout << trianglesSmart << std::endl;
+  std::cout << trianglesFast << std::endl;
   std::cout << shaderModules << std::endl;
 }
 

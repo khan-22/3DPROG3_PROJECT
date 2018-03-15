@@ -22,11 +22,10 @@ std::pair<std::string, std::string> BenchTemplate::loadShaderSource() {
     v_shaderText = std::string((std::istreambuf_iterator<char>(v_input)),
                                std::istreambuf_iterator<char>());
     v_input.close();
-	}
-	else {
-		std::cerr << "Failed to find vertex shader file!" << std::endl;
-		std::exit(EXIT_FAILURE);
-	}
+  } else {
+    std::cerr << "Failed to find vertex shader file!" << std::endl;
+    std::exit(EXIT_FAILURE);
+  }
 
   std::ifstream f_input("./res/fragment.glsl");
   std::string   f_shaderText;
@@ -34,11 +33,10 @@ std::pair<std::string, std::string> BenchTemplate::loadShaderSource() {
     f_shaderText = std::string((std::istreambuf_iterator<char>(f_input)),
                                std::istreambuf_iterator<char>());
     f_input.close();
-	}
-	else {
-		std::cerr << "Failed to find fragment shader file!" << std::endl;
-		std::exit(EXIT_FAILURE);
-	}
+  } else {
+    std::cerr << "Failed to find fragment shader file!" << std::endl;
+    std::exit(EXIT_FAILURE);
+  }
 
   return {v_shaderText, f_shaderText};
 }
@@ -50,4 +48,16 @@ std::string BenchTemplate::getNextDefine() {
 
   return {"#version 450\n\n#define COLOR1 " + std::to_string(r) + "," +
           std::to_string(g) + "," + std::to_string(b) + "\n\n"};
+}
+
+std::array<Vertex, 3> BenchTemplate::getNextTriangle() {
+  return {Vertex{(rand() % 255) / 255.f,
+                 (rand() % 255) / 255.f,
+                 (rand() % 255) / 255.f},
+          Vertex{(rand() % 255) / 255.f,
+                 (rand() % 255) / 255.f,
+                 (rand() % 255) / 255.f},
+          Vertex{(rand() % 255) / 255.f,
+                 (rand() % 255) / 255.f,
+                 (rand() % 255) / 255.f}};
 }
