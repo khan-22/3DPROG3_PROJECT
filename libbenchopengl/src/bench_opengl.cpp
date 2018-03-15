@@ -75,7 +75,6 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 		//Temporary
 		int  success;
 		gl::glGetShaderiv(VS, gl::GLenum::GL_COMPILE_STATUS, &success);
-
 		if (!success)
 		{
 			printf("\n\nERROR COMPILING VS SHADER\n\n");
@@ -86,6 +85,23 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 		src = shaderPairArr[i].second.c_str();
 		gl::glShaderSource(FS, 1, &src, NULL);
 		gl::glCompileShader(FS);
+
+		GLuint shaderProgram;
+		shaderProgram = gl::glCreateProgram();
+		gl::glAttachShader(shaderProgram, VS);
+		gl::glAttachShader(shaderProgram, FS);
+		gl::glLinkProgram(shaderProgram);
+
+		//Temporary
+		gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
+		if (!success)
+		{
+			printf("\n\nERROR CREATING SHADER PROGRAM\n\n");
+		}
+		//
+
+		gl::glDeleteShader(VS);
+		gl::glDeleteShader(FS);
 	}
 
 }
