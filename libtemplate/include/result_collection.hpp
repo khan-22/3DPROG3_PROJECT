@@ -9,6 +9,8 @@
 
 #include "common.hpp"
 
+struct ResultCollection;
+
 //
 // Helper class
 struct Timer {
@@ -23,6 +25,8 @@ struct Timer {
 
   Time _start;
   Time _end;
+
+  friend std::ostream& operator<<(std::ostream& a, const ResultCollection& b);
 };
 
 //

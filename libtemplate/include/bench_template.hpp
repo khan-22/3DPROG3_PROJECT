@@ -23,13 +23,17 @@ class BenchTemplate {
   virtual void createTrianglesSlow(ResultCollection& resultCollection)  = 0;
   virtual void createTrianglesSmart(ResultCollection& resultCollection) = 0;
   virtual void createTrianglesFast(ResultCollection& resultCollection)  = 0;
+  virtual void intermediateTriangleCleanUp()                            = 0;
 
   virtual void createShaderModules(ResultCollection& resultCollection) = 0;
   virtual void createPipelines(ResultCollection& resultCollection)     = 0;
 
-  virtual void firstDraw(ResultCollection& resultCollection)  = 0;
-  virtual void secondDraw(ResultCollection& resultCollection) = 0;
-  virtual void thirdDraw(ResultCollection& resultCollection)  = 0;
+  virtual void singleTriangleDraw(ResultCollection& resultCollection,
+                                  bool              device)          = 0;
+  virtual void optimalMultipleTriangleDraw(ResultCollection& resultCollection,
+                                           bool              device) = 0;
+  virtual void badMultipleTriangleDraw(ResultCollection& resultCollection,
+                                       bool              device)     = 0;
 
   virtual void clean_up(ResultCollection& resultCollection) = 0;
 

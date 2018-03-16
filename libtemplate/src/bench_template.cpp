@@ -51,13 +51,13 @@ std::string BenchTemplate::getNextDefine() {
 }
 
 std::array<Vertex, 3> BenchTemplate::getNextTriangle() {
-  return {Vertex{(rand() % 255) / 255.f,
-                 (rand() % 255) / 255.f,
-                 (rand() % 255) / 255.f},
-          Vertex{(rand() % 255) / 255.f,
-                 (rand() % 255) / 255.f,
-                 (rand() % 255) / 255.f},
-          Vertex{(rand() % 255) / 255.f,
-                 (rand() % 255) / 255.f,
-                 (rand() % 255) / 255.f}};
+  return {Vertex{(rand() % 512) / 256.f - 1.f,
+                 (rand() % 512) / 256.f - 1.f,
+                 (rand() % 512) / 256.f - 1.f},
+          Vertex{(rand() % 512) / 256.f - 1.f,
+                 (rand() % 512) / 256.f - 1.f,
+                 (rand() % 512) / 256.f - 1.f},
+          Vertex{(rand() % 512) / 256.f - 1.f,
+                 (rand() % 512) / 256.f - 1.f,
+                 (rand() % 512) / 256.f - 1.f}};
 }

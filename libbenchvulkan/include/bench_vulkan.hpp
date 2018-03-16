@@ -12,9 +12,15 @@
 #include <GLFW/glfw3.h>
 #include <array>
 
-#define USE_VALIDATION_LAYERS true
+#define USE_VALIDATION_LAYERS false
 
 class BenchVulkan : public BenchTemplate {
+ private:
+  struct Triangle {
+    vk::Buffer       buffer;
+    vk::DeviceMemory memory;
+  };
+
  public:
   BenchVulkan(int numberOfThreads, int N, int M);
   virtual ~BenchVulkan();
@@ -29,15 +35,19 @@ class BenchVulkan : public BenchTemplate {
       ResultCollection& resultCollection) final override;
   virtual void createTrianglesFast(
       ResultCollection& resultCollection) final override;
+  virtual void intermediateTriangleCleanUp() final override;
 
   virtual void createShaderModules(
       ResultCollection& resultCollection) final override;
   virtual void createPipelines(
       ResultCollection& resultCollection) final override;
 
-  virtual void firstDraw(ResultCollection& resultCollection) final override;
-  virtual void secondDraw(ResultCollection& resultCollection) final override;
-  virtual void thirdDraw(ResultCollection& resultCollection) final override;
+  virtual void singleTriangleDraw(ResultCollection& resultCollection,
+                                  bool              device) final override;
+  virtual void optimalMultipleTriangleDraw(ResultCollection& resultCollection,
+                                           bool device) final override;
+  virtual void badMultipleTriangleDraw(ResultCollection& resultCollection,
+                                       bool              device) final override;
 
   virtual void clean_up(ResultCollection& resultCollection) final override;
 
@@ -52,6 +62,8 @@ class BenchVulkan : public BenchTemplate {
   void makeFramebuffers();
   void makeCommandPool();
   void makeCommandBuffers();
+  void makePipelineLayout();
+  void makeSemaphores();
 
   void thread_createTrianglesHost(int startIndex,
                                   int endIndex,
@@ -72,6 +84,23 @@ class BenchVulkan : public BenchTemplate {
       int                                        threadIndex,
       const std::pair<std::string, std::string>& sourcePair);
 
+  void thread_createPipelines(int startIndex, int endIndex, int threadIndex);
+
+  void thread_singleTriangleDraw(int                                startIndex,
+                                 int                                endIndex,
+                                 int                                threadIndex,
+                                 std::array<Triangle, BENCHMARK_N>* triangles);
+  void thread_optimalMultiTriangleDraw(
+      int                                startIndex,
+      int                                endIndex,
+      int                                threadIndex,
+      std::array<Triangle, BENCHMARK_N>* triangles);
+  void thread_badMultipleTriangleDraw(
+      int                                startIndex,
+      int                                endIndex,
+      int                                threadIndex,
+      std::array<Triangle, BENCHMARK_N>* triangles);
+
   uint32_t findMemoryType(uint32_t                typeFilter,
                           vk::MemoryPropertyFlags properties);
 
@@ -80,7 +109,8 @@ class BenchVulkan : public BenchTemplate {
       vk::BufferUsageFlags    usage,
       vk::MemoryPropertyFlags properties);
 
-  vk::CommandBuffer getTransferCommandBuffer(int threadIdx);
+  vk::CommandBuffer getTransferCommandBuffer(int threadIndex);
+  vk::CommandBuffer getGraphicsCommandBuffer(int threadIndex);
 
   void copyBufferOnce(vk::Buffer     srcBuffer,
                       vk::Buffer     dstBuffer,
@@ -147,14 +177,8 @@ class BenchVulkan : public BenchTemplate {
   vk::PipelineLayout _pipelineLayout;
   vk::DescriptorPool _descriptorPool;
 
-  struct Triangle {
-    vk::Buffer       buffer;
-    vk::DeviceMemory memory;
-  };
   std::array<Triangle, BENCHMARK_N> _trianglesHost;
-  std::array<Triangle, BENCHMARK_N> _trianglesSlow;
-  std::array<Triangle, BENCHMARK_N> _trianglesSmart;
-  std::array<Triangle, BENCHMARK_N> _trianglesFast;
+  std::array<Triangle, BENCHMARK_N> _trianglesDevice;
 
   std::array<std::pair<vk::ShaderModule, vk::ShaderModule>, BENCHMARK_N>
       _shaderModules;

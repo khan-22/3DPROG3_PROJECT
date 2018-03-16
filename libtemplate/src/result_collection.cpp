@@ -67,13 +67,18 @@ void ResultCollection::nextIteration() {
 //
 // stream overload to easily print our results
 std::ostream& operator<<(std::ostream& a, const ResultCollection& b) {
+  a << "Timestamp\t";
   for (auto& result : b._results[0]) {
     a << result.getColumnHead() << "\t";
   }
   for (auto& row : b._results) {
-    a << std::endl;
-    for (auto& result : row) {
-      a << result.time << "\t";
+    if (row.size() > 0) {
+      a << std::endl;
+      Time timestamp = row[0]._start;
+      a << timestamp.time_since_epoch().count() << "\t";
+      for (auto& result : row) {
+        a << result.time << "\t";
+      }
     }
   }
 
