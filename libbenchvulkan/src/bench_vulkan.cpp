@@ -42,10 +42,12 @@ void BenchVulkan::initialize(ResultCollection& resultCollection) {
   t.stop();
   resultCollection.addResult(t);
 
+#if USE_VALIDATION_LAYERS
   t.start("DebugCallback");
   makeDebugCallback();
   t.stop();
   resultCollection.addResult(t);
+#endif  // USE_VALIDATION_LAYERS
 
   t.start("Surface");
   makeSurface();
@@ -84,6 +86,16 @@ void BenchVulkan::initialize(ResultCollection& resultCollection) {
 
   t.start("CommandBuffers");
   makeCommandBuffers();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("PipelineLayout");
+  makePipelineLayout();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Semaphores");
+  makeSemaphores();
   t.stop();
   resultCollection.addResult(t);
 }
@@ -147,7 +159,7 @@ void BenchVulkan::thread_createTrianglesSlow(int startIndex,
   const size_t size = 3 * sizeof(Vertex);
 
   for (int i = startIndex; i < endIndex; i++) {
-    Triangle& triangle = _trianglesSlow[i];
+    Triangle& triangle = _trianglesDevice[i];
 
     auto stagingBufferAndMemory =
         getNewBuffer(size,
@@ -204,7 +216,7 @@ void BenchVulkan::thread_createTrianglesSlow(int startIndex,
 }
 
 void BenchVulkan::createTrianglesSlow(ResultCollection& resultCollection) {
-  const int TRI_PER_THREAD = _trianglesSlow.size() / _numberOfThreads;
+  const int TRI_PER_THREAD = _trianglesDevice.size() / _numberOfThreads;
   int       startIndex     = 0;
   int       endIndex       = TRI_PER_THREAD;
 
@@ -222,7 +234,7 @@ void BenchVulkan::createTrianglesSlow(ResultCollection& resultCollection) {
   }
 
   thread_createTrianglesSlow(
-      startIndex, _trianglesSlow.size(), _numberOfThreads - 1);
+      startIndex, _trianglesDevice.size(), _numberOfThreads - 1);
 
   for (auto& thread : threads) {
     thread.join();
@@ -269,11 +281,13 @@ void BenchVulkan::thread_createTrianglesSmart(int startIndex,
     vk::CommandBuffer& currentCommandBuffer = commandChain[current];
     vk::Buffer&        currentStagingBuffer = stagingChain[current].first;
     vk::DeviceMemory&  currentStagingMemory = stagingChain[current++].second;
-    Triangle&          triangle             = _trianglesSmart[i];
+    Triangle&          triangle             = _trianglesDevice[i];
 
     if (hasRunOnce) {
       _deviceContext.device.waitForFences(
           currentFence, true, std::numeric_limits<uint32_t>::max());
+
+      _deviceContext.device.resetFences(currentFence);
     }
 
     void* mappedMemory;
@@ -332,7 +346,7 @@ void BenchVulkan::thread_createTrianglesSmart(int startIndex,
 }
 
 void BenchVulkan::createTrianglesSmart(ResultCollection& resultCollection) {
-  const int TRI_PER_THREAD = _trianglesSmart.size() / _numberOfThreads;
+  const int TRI_PER_THREAD = _trianglesDevice.size() / _numberOfThreads;
   int       startIndex     = 0;
   int       endIndex       = TRI_PER_THREAD;
 
@@ -350,7 +364,7 @@ void BenchVulkan::createTrianglesSmart(ResultCollection& resultCollection) {
   }
 
   thread_createTrianglesSmart(
-      startIndex, _trianglesSmart.size(), _numberOfThreads - 1);
+      startIndex, _trianglesDevice.size(), _numberOfThreads - 1);
 
   for (auto& thread : threads) {
     thread.join();
@@ -366,7 +380,7 @@ void BenchVulkan::thread_createTrianglesFast(int startIndex,
   stagings.reserve(endIndex - startIndex);
 
   for (int i = startIndex; i < endIndex; i++) {
-    Triangle& triangle = _trianglesFast[i];
+    Triangle& triangle = _trianglesDevice[i];
 
     auto stagingBufferAndMemory =
         getNewBuffer(size,
@@ -409,7 +423,7 @@ void BenchVulkan::thread_createTrianglesFast(int startIndex,
 
   for (int i = startIndex; i < endIndex; i++) {
     commandBuffer.copyBuffer(
-        stagings[i - startIndex].first, _trianglesFast[i].buffer, copyRegion);
+        stagings[i - startIndex].first, _trianglesDevice[i].buffer, copyRegion);
   }
   commandBuffer.end();
 
@@ -430,7 +444,7 @@ void BenchVulkan::thread_createTrianglesFast(int startIndex,
 }
 
 void BenchVulkan::createTrianglesFast(ResultCollection& resultCollection) {
-  const int TRI_PER_THREAD = _trianglesHost.size() / _numberOfThreads;
+  const int TRI_PER_THREAD = _trianglesDevice.size() / _numberOfThreads;
   int       startIndex     = 0;
   int       endIndex       = TRI_PER_THREAD;
 
@@ -448,10 +462,21 @@ void BenchVulkan::createTrianglesFast(ResultCollection& resultCollection) {
   }
 
   thread_createTrianglesFast(
-      startIndex, _trianglesHost.size(), _numberOfThreads - 1);
+      startIndex, _trianglesDevice.size(), _numberOfThreads - 1);
 
   for (auto& thread : threads) {
     thread.join();
+  }
+}
+
+void BenchVulkan::intermediateTriangleCleanUp() {
+  if (_trianglesDevice[0].buffer != vk::Buffer()) {
+    for (auto& triangle : _trianglesDevice) {
+      _deviceContext.device.destroyBuffer(triangle.buffer);
+      _deviceContext.device.freeMemory(triangle.memory);
+      triangle.buffer = nullptr;
+      triangle.memory = nullptr;
+    }
   }
 }
 
@@ -575,47 +600,358 @@ void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
   }
 
   thread_createShaderModules(
-      startIndex, _trianglesHost.size(), _numberOfThreads - 1, sourcePair);
+      startIndex, _shaderModules.size(), _numberOfThreads - 1, sourcePair);
 
   for (auto& thread : threads) {
     thread.join();
   }
 }
 
+void BenchVulkan::thread_createPipelines(int startIndex,
+                                         int endIndex,
+                                         int threadIndex) {
+  for (int i = startIndex; i < endIndex; i++) {
+    vk::Pipeline& pipeline = _pipelines[i];
+
+    vk::PipelineShaderStageCreateInfo vertShaderStageInfo;
+    vertShaderStageInfo.stage  = vk::ShaderStageFlagBits::eVertex;
+    vertShaderStageInfo.module = _shaderModules[i].first;
+    vertShaderStageInfo.pName  = "main";
+
+    vk::PipelineShaderStageCreateInfo fragShaderStageInfo;
+    fragShaderStageInfo.stage  = vk::ShaderStageFlagBits::eFragment;
+    fragShaderStageInfo.module = _shaderModules[i].second;
+    fragShaderStageInfo.pName  = "main";
+
+    vk::PipelineShaderStageCreateInfo shaderStageInfos[] = {
+        vertShaderStageInfo, fragShaderStageInfo};
+
+    vk::VertexInputBindingDescription vertexBindingDescriptions[1] = {};
+    // Pos
+    vertexBindingDescriptions[0].binding   = 0;
+    vertexBindingDescriptions[0].stride    = sizeof(Vertex);
+    vertexBindingDescriptions[0].inputRate = vk::VertexInputRate::eVertex;
+
+    vk::VertexInputAttributeDescription vertexAttributeDescriptions[1] = {};
+    // Pos
+    vertexAttributeDescriptions[0].binding  = 0;
+    vertexAttributeDescriptions[0].location = 0;
+    vertexAttributeDescriptions[0].format   = vk::Format::eR32G32B32Sfloat;
+    vertexAttributeDescriptions[0].offset   = 0;
+
+    // Hook up the binding and attribute descriptions
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo = {};
+    vertexInputInfo.vertexBindingDescriptionCount          = 1;
+    vertexInputInfo.pVertexBindingDescriptions      = vertexBindingDescriptions;
+    vertexInputInfo.vertexAttributeDescriptionCount = 1;
+    vertexInputInfo.pVertexAttributeDescriptions = vertexAttributeDescriptions;
+
+    vk::PipelineInputAssemblyStateCreateInfo inputAssemply = {};
+    inputAssemply.topology = vk::PrimitiveTopology::eTriangleList;
+    inputAssemply.primitiveRestartEnable =
+        static_cast<vk::Bool32>(false);  // In lieu of VK_FALSE
+
+    vk::Viewport viewport;
+    viewport.x        = 0.f;
+    viewport.y        = 0.f;
+    viewport.width    = static_cast<float>(_swapchainContext.extent.width);
+    viewport.height   = static_cast<float>(_swapchainContext.extent.height);
+    viewport.minDepth = 0.f;
+    viewport.maxDepth = 0.f;
+
+    vk::Rect2D scissor;
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+    scissor.extent   = _swapchainContext.extent;
+
+    vk::PipelineViewportStateCreateInfo viewportState = {};
+    viewportState.viewportCount                       = 1;
+    viewportState.pViewports                          = &viewport;
+    viewportState.scissorCount                        = 1;
+    viewportState.pScissors                           = &scissor;
+
+    vk::PipelineRasterizationStateCreateInfo rasterizer = {};
+    rasterizer.depthClampEnable        = static_cast<vk::Bool32>(false);
+    rasterizer.rasterizerDiscardEnable = static_cast<vk::Bool32>(false);
+    rasterizer.polygonMode             = vk::PolygonMode::eFill;
+    rasterizer.lineWidth               = 1.0f;
+    rasterizer.cullMode                = vk::CullModeFlagBits::eNone;
+    rasterizer.frontFace               = vk::FrontFace::eClockwise;
+    rasterizer.depthBiasEnable         = static_cast<vk::Bool32>(false);
+    rasterizer.depthBiasConstantFactor = 0.0f;
+    rasterizer.depthBiasClamp          = 0.0f;
+    rasterizer.depthBiasSlopeFactor    = 0.0f;
+
+    vk::PipelineMultisampleStateCreateInfo multisampling = {};
+    multisampling.sampleShadingEnable   = static_cast<vk::Bool32>(false);
+    multisampling.rasterizationSamples  = vk::SampleCountFlagBits::e1;
+    multisampling.minSampleShading      = 1.0f;
+    multisampling.pSampleMask           = nullptr;
+    multisampling.alphaToCoverageEnable = static_cast<vk::Bool32>(false);
+    multisampling.alphaToOneEnable      = static_cast<vk::Bool32>(false);
+
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment = {};
+    colorBlendAttachment.colorWriteMask =
+        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+    colorBlendAttachment.blendEnable = static_cast<vk::Bool32>(false);
+
+    vk::PipelineColorBlendStateCreateInfo colorBlending = {};
+    colorBlending.logicOpEnable     = static_cast<vk::Bool32>(false);
+    colorBlending.logicOp           = vk::LogicOp::eCopy;
+    colorBlending.attachmentCount   = 1;
+    colorBlending.pAttachments      = &colorBlendAttachment;
+    colorBlending.blendConstants[0] = 0.0f;
+    colorBlending.blendConstants[1] = 0.0f;
+    colorBlending.blendConstants[2] = 0.0f;
+    colorBlending.blendConstants[3] = 0.0f;
+
+    vk::GraphicsPipelineCreateInfo pipelineInfo;
+    pipelineInfo.stageCount          = 2;
+    pipelineInfo.pStages             = shaderStageInfos;
+    pipelineInfo.pVertexInputState   = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &inputAssemply;
+    pipelineInfo.pViewportState      = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState   = &multisampling;
+    pipelineInfo.pDepthStencilState  = nullptr;
+    pipelineInfo.pColorBlendState    = &colorBlending;
+    pipelineInfo.pDynamicState       = nullptr;
+    pipelineInfo.layout              = _pipelineLayout;
+    pipelineInfo.renderPass          = _renderContext.renderPass;
+    pipelineInfo.subpass             = 0;
+
+    CRITICAL(_deviceContext.device.createGraphicsPipelines(
+                 nullptr, 1, &pipelineInfo, nullptr, &pipeline),
+             "createGraphicsPipeline");
+  }
+}
+
 void BenchVulkan::createPipelines(ResultCollection& resultCollection) {
+  const int PIPES_PER_THREAD = _pipelines.size() / _numberOfThreads;
+  int       startIndex       = 0;
+  int       endIndex         = PIPES_PER_THREAD;
+
+  std::vector<std::thread> threads;
+  threads.reserve(_numberOfThreads - 1);
+  for (int i = 0; i < _numberOfThreads - 1; i++) {
+    threads.emplace_back(
+        &BenchVulkan::thread_createPipelines, this, startIndex, endIndex, i);
+
+    startIndex += PIPES_PER_THREAD;
+    endIndex += PIPES_PER_THREAD;
+  }
+
+  thread_createPipelines(startIndex, _pipelines.size(), _numberOfThreads - 1);
+
+  for (auto& thread : threads) {
+    thread.join();
+  }
 }
 
-void BenchVulkan::firstDraw(ResultCollection& resultCollection) {
+void BenchVulkan::thread_singleTriangleDraw(
+    int                                startIndex,
+    int                                endIndex,
+    int                                threadIndex,
+    std::array<Triangle, BENCHMARK_N>* triangles) {
+  ThreadContext& threadContext = _threadContexts[threadIndex];
+
+  uint32_t currentIndex = _renderContext.currentSwapChainImageIndex;
+
+  vk::CommandBuffer& currentCommandBuffer =
+      threadContext.commandBuffers[currentIndex];
+
+  vk::CommandBufferBeginInfo beginInfo;
+  beginInfo.flags            = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+  beginInfo.pInheritanceInfo = nullptr;
+
+  vk::ClearValue clearColor;
+  clearColor.color.float32[0] = 0.f;
+  clearColor.color.float32[1] = 1.f;
+  clearColor.color.float32[2] = 1.f;
+  clearColor.color.float32[3] = 1.f;
+
+  vk::RenderPassBeginInfo renderPassBeginInfo;
+  renderPassBeginInfo.renderPass = _renderContext.renderPass;
+  renderPassBeginInfo.framebuffer =
+      _swapchainContext.framebuffers[currentIndex];
+  renderPassBeginInfo.renderArea.offset.x = 0;
+  renderPassBeginInfo.renderArea.offset.y = 0;
+  renderPassBeginInfo.renderArea.extent   = _swapchainContext.extent;
+  // renderPassBeginInfo.clearValueCount     = 1;
+  // renderPassBeginInfo.pClearValues        = &clearColor;
+
+  currentCommandBuffer.begin(beginInfo);
+  currentCommandBuffer.beginRenderPass(renderPassBeginInfo,
+                                       vk::SubpassContents::eInline);
+
+  for (int i = startIndex; i < endIndex; i++) {
+    currentCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
+                                      _pipelines[i]);
+    currentCommandBuffer.bindVertexBuffers(0, {(*triangles)[i].buffer}, {0});
+    currentCommandBuffer.draw(3, 1, 0, 0);
+  }
+  currentCommandBuffer.endRenderPass();
+  currentCommandBuffer.end();
 }
 
-void BenchVulkan::secondDraw(ResultCollection& resultCollection) {
+void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
+                                     bool              device) {
+  Timer t;
+  t.start("Construction");
+
+  std::array<Triangle, BENCHMARK_N>* triangles;
+  if (device) {
+    triangles = &_trianglesDevice;
+  } else {
+    triangles = &_trianglesDevice;
+  }
+  _renderContext.currentSwapChainImageIndex =
+      _deviceContext.device
+          .acquireNextImageKHR(_swapchainContext.swapchain,
+                               (std::numeric_limits<uint64_t>::max)(),
+                               _renderContext.imageAvailableSemaphore,
+                               nullptr)
+          .value;
+
+  const int DRAWS_PER_THREAD = triangles->size() / _numberOfThreads;
+  int       startIndex       = 0;
+  int       endIndex         = DRAWS_PER_THREAD;
+
+  std::vector<std::thread> threads;
+  threads.reserve(_numberOfThreads - 1);
+  for (int i = 0; i < _numberOfThreads - 1; i++) {
+    threads.emplace_back(&BenchVulkan::thread_singleTriangleDraw,
+                         this,
+                         startIndex,
+                         endIndex,
+                         i,
+                         triangles);
+
+    startIndex += DRAWS_PER_THREAD;
+    endIndex += DRAWS_PER_THREAD;
+  }
+
+  thread_singleTriangleDraw(
+      startIndex, triangles->size(), _numberOfThreads - 1, triangles);
+
+  for (auto& thread : threads) {
+    thread.join();
+  }
+
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Submission");
+  // Rendering
+  {
+    std::vector<vk::CommandBuffer> commandBuffers;
+    commandBuffers.reserve(_numberOfThreads);
+    for (auto& threadContext : _threadContexts) {
+      commandBuffers.push_back(
+          threadContext
+              .commandBuffers[_renderContext.currentSwapChainImageIndex]);
+    }
+    vk::Semaphore waitSemaphores[]   = {_renderContext.imageAvailableSemaphore};
+    vk::Semaphore signalSemaphores[] = {_renderContext.renderFinishedSemaphore};
+    vk::PipelineStageFlags waitStages[] = {
+        vk::PipelineStageFlagBits::eColorAttachmentOutput};
+
+    vk::SubmitInfo submitInfo;
+    submitInfo.waitSemaphoreCount   = 1;
+    submitInfo.pWaitSemaphores      = waitSemaphores;
+    submitInfo.pWaitDstStageMask    = waitStages;
+    submitInfo.commandBufferCount   = commandBuffers.size();
+    submitInfo.pCommandBuffers      = commandBuffers.data();
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores    = signalSemaphores;
+
+    _threadContexts[_numberOfThreads - 1].queue.submit(submitInfo, nullptr);
+  }
+
+  // Presentation
+  {
+    vk::Semaphore waitSemaphores[] = {
+        _renderContext.renderFinishedSemaphore};  // Wait for this...
+    vk::Semaphore signalSemaphores[] = {
+        _renderContext.imageAvailableSemaphore};  // Signal this when finished.
+
+    vk::SwapchainKHR swapChains[] = {_swapchainContext.swapchain};
+
+    vk::PresentInfoKHR presentInfo;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores    = waitSemaphores;
+    presentInfo.swapchainCount     = 1;
+    presentInfo.pSwapchains        = swapChains;
+    presentInfo.pImageIndices      = &_renderContext.currentSwapChainImageIndex;
+    presentInfo.pResults           = nullptr;
+
+    _threadContexts[_numberOfThreads - 1].queue.presentKHR(presentInfo);
+  }
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Waiting");
+  _threadContexts[_numberOfThreads - 1].queue.waitIdle();
+  t.stop();
+  resultCollection.addResult(t);
 }
 
-void BenchVulkan::thirdDraw(ResultCollection& resultCollection) {
+void BenchVulkan::thread_optimalMultiTriangleDraw(
+    int                                startIndex,
+    int                                endIndex,
+    int                                threadIndex,
+    std::array<Triangle, BENCHMARK_N>* triangles) {
+  //
+}
+
+void BenchVulkan::optimalMultipleTriangleDraw(
+    ResultCollection& resultCollection, bool device) {
+  //
+}
+
+void BenchVulkan::thread_badMultipleTriangleDraw(
+    int                                startIndex,
+    int                                endIndex,
+    int                                threadIndex,
+    std::array<Triangle, BENCHMARK_N>* triangles) {
+  //
+}
+
+void BenchVulkan::badMultipleTriangleDraw(ResultCollection& resultCollection,
+                                          bool              device) {
+  //
 }
 
 void BenchVulkan::clean_up(ResultCollection& resultCollection) {
+  _deviceContext.device.waitIdle();
+
+  for (auto& pipeline : _pipelines) {
+    _deviceContext.device.destroyPipeline(pipeline);
+  }
+
   for (auto& shaderModule : _shaderModules) {
     _deviceContext.device.destroyShaderModule(shaderModule.first);
     _deviceContext.device.destroyShaderModule(shaderModule.second);
   }
 
-  for (auto& triangle : _trianglesFast) {
+  for (auto& triangle : _trianglesDevice) {
     _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
     _deviceContext.device.freeMemory(triangle.memory, nullptr);
-  }
-  for (auto& triangle : _trianglesSlow) {
-    _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
-    _deviceContext.device.freeMemory(triangle.memory, nullptr);
-  }
-  for (auto& triangle : _trianglesSmart) {
-    _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
-    _deviceContext.device.freeMemory(triangle.memory, nullptr);
+    triangle.buffer = nullptr;
+    triangle.memory = nullptr;
   }
   for (auto& triangle : _trianglesHost) {
     _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
     _deviceContext.device.freeMemory(triangle.memory, nullptr);
   }
+
+  _deviceContext.device.destroySemaphore(
+      _renderContext.renderFinishedSemaphore);
+  _deviceContext.device.destroySemaphore(
+      _renderContext.imageAvailableSemaphore);
+
+  _deviceContext.device.destroyPipelineLayout(_pipelineLayout);
 
   for (auto& threadContext : _threadContexts) {
     _deviceContext.device.freeCommandBuffers(threadContext.commandPool,
@@ -643,9 +979,11 @@ void BenchVulkan::clean_up(ResultCollection& resultCollection) {
 
   _instance.destroySurfaceKHR(_deviceContext.surface);
 
+#if USE_VALIDATION_LAYERS
   auto destroyDebugCallback = GET_PROC(vkDestroyDebugReportCallbackEXT);
   destroyDebugCallback(
       _instance, static_cast<VkDebugReportCallbackEXT>(_callback), nullptr);
+#endif  // USE_VALIDATION_LAYERS
 
   _instance.destroy();
 
@@ -1029,7 +1367,7 @@ void BenchVulkan::makeRenderPass() {
   vk::AttachmentDescription colorAttachment = {};
   colorAttachment.format                    = _swapchainContext.imageFormat;
   colorAttachment.samples                   = vk::SampleCountFlagBits::e1;
-  colorAttachment.loadOp                    = vk::AttachmentLoadOp::eClear;
+  colorAttachment.loadOp                    = vk::AttachmentLoadOp::eLoad;
   colorAttachment.storeOp                   = vk::AttachmentStoreOp::eStore;
   colorAttachment.stencilLoadOp             = vk::AttachmentLoadOp::eDontCare;
   colorAttachment.stencilStoreOp            = vk::AttachmentStoreOp::eDontCare;
@@ -1140,6 +1478,29 @@ void BenchVulkan::makeCommandBuffers() {
   }
 }
 
+void BenchVulkan::makePipelineLayout() {
+  vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
+  pipelineLayoutInfo.pushConstantRangeCount = 0;
+  pipelineLayoutInfo.setLayoutCount         = 0;
+  pipelineLayoutInfo.pSetLayouts            = nullptr;
+
+  CRITICAL(_deviceContext.device.createPipelineLayout(
+               &pipelineLayoutInfo, nullptr, &_pipelineLayout),
+           "createPipelineLayout");
+}
+
+void BenchVulkan::makeSemaphores() {
+  vk::SemaphoreCreateInfo semaphoreInfo;
+  CRITICAL(
+      _deviceContext.device.createSemaphore(
+          &semaphoreInfo, nullptr, &_renderContext.imageAvailableSemaphore),
+      "createSemaphore");
+  CRITICAL(
+      _deviceContext.device.createSemaphore(
+          &semaphoreInfo, nullptr, &_renderContext.renderFinishedSemaphore),
+      "createSemaphore");
+}
+
 uint32_t BenchVulkan::findMemoryType(uint32_t                typeFilter,
                                      vk::MemoryPropertyFlags properties) {
   vk::PhysicalDeviceMemoryProperties memProperties;
@@ -1196,6 +1557,18 @@ std::pair<vk::Buffer, vk::DeviceMemory> BenchVulkan::getNewBuffer(
 }
 
 vk::CommandBuffer BenchVulkan::getTransferCommandBuffer(int threadIndex) {
+  vk::CommandBufferAllocateInfo allocInfo;
+  allocInfo.level              = vk::CommandBufferLevel::ePrimary;
+  allocInfo.commandPool        = _threadContexts[threadIndex].commandPool;
+  allocInfo.commandBufferCount = 1;
+
+  vk::CommandBuffer commandBuffer;
+  _deviceContext.device.allocateCommandBuffers(&allocInfo, &commandBuffer);
+
+  return commandBuffer;
+}
+
+vk::CommandBuffer BenchVulkan::getGraphicsCommandBuffer(int threadIndex) {
   vk::CommandBufferAllocateInfo allocInfo;
   allocInfo.level              = vk::CommandBufferLevel::ePrimary;
   allocInfo.commandPool        = _threadContexts[threadIndex].commandPool;

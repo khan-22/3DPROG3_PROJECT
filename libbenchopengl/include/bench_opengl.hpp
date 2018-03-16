@@ -22,15 +22,19 @@ class BenchOpenGL : public BenchTemplate {
       ResultCollection& resultCollection) final override;
   virtual void createTrianglesFast(
       ResultCollection& resultCollection) final override;
+  virtual void intermediateTriangleCleanUp() final override;
 
   virtual void createShaderModules(
       ResultCollection& resultCollection) final override;
   virtual void createPipelines(
       ResultCollection& resultCollection) final override;
 
-  virtual void firstDraw(ResultCollection& resultCollection) final override;
-  virtual void secondDraw(ResultCollection& resultCollection) final override;
-  virtual void thirdDraw(ResultCollection& resultCollection) final override;
+  virtual void singleTriangleDraw(ResultCollection& resultCollection,
+                                  bool              device) final override;
+  virtual void optimalMultipleTriangleDraw(ResultCollection& resultCollection,
+                                           bool device) final override;
+  virtual void badMultipleTriangleDraw(ResultCollection& resultCollection,
+                                       bool              device) final override;
 
   virtual void clean_up(ResultCollection& resultCollection) final override;
 

@@ -55,6 +55,10 @@ void BenchOpenGL::createTrianglesFast(ResultCollection& resultCollection) {
   //
 }
 
+void BenchOpenGL::intermediateTriangleCleanUp() {
+  //
+}
+
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
   auto sourcePair = loadShaderSource();
 
@@ -66,13 +70,19 @@ void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
 void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 }
 
-void BenchOpenGL::firstDraw(ResultCollection& resultCollection) {
+void BenchOpenGL::singleTriangleDraw(ResultCollection& resultCollection,
+                                     bool              device) {
+  //
 }
 
-void BenchOpenGL::secondDraw(ResultCollection& resultCollection) {
+void BenchOpenGL::optimalMultipleTriangleDraw(
+    ResultCollection& resultCollection, bool device) {
+  //
 }
 
-void BenchOpenGL::thirdDraw(ResultCollection& resultCollection) {
+void BenchOpenGL::badMultipleTriangleDraw(ResultCollection& resultCollection,
+                                          bool              device) {
+  //
 }
 
 void BenchOpenGL::clean_up(ResultCollection& resultCollection) {

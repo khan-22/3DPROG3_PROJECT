@@ -19,6 +19,27 @@ enum class BENCHMARK_TYPE {
   VULKAN,
 };
 
+#define TEST(name, ...)                     \
+  {                                         \
+    Timer timer;                            \
+    timer.start("Total");                   \
+    benchmark->name((name), ##__VA_ARGS__); \
+    timer.stop();                           \
+                                            \
+    (name).addResult(timer);                \
+    (name).nextIteration();                 \
+  }
+
+#define TEST2(name, collection, ...)              \
+  {                                               \
+    Timer timer;                                  \
+    timer.start("Total");                         \
+    benchmark->name((collection), ##__VA_ARGS__); \
+    timer.stop();                                 \
+                                                  \
+    (collection).addResult(timer);                \
+    (collection).nextIteration();                 \
+  }
 //
 // The test routine
 void runBenchmark(BENCHMARK_TYPE benchmarkType) {
@@ -30,115 +51,50 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
     benchmark.reset(new BenchVulkan(2, 10, 10));
   }
 
-  ResultCollection initialization;
-  ResultCollection trianglesHost;
-  ResultCollection trianglesSlow;
-  ResultCollection trianglesSmart;
-  ResultCollection trianglesFast;
-  ResultCollection shaderModules;
-  ResultCollection pipelines;
+  ResultCollection initialize;
+  ResultCollection createTrianglesHost;
+  ResultCollection createTrianglesSlow;
+  ResultCollection createTrianglesSmart;
+  ResultCollection createTrianglesFast;
+  ResultCollection createShaderModules;
+  ResultCollection createPipelines;
+
   ResultCollection firstDraw;
   ResultCollection secondDraw;
   ResultCollection thirdDraw;
+
   ResultCollection clean_up;
+
   for (int i = 0; i < BENCHMARK_OUTER_RUNS; i++) {
-    // Initialization
-    {
-      // ResultCollection results;
+    TEST(initialize);
+    TEST(createTrianglesHost);
+    benchmark->intermediateTriangleCleanUp();
+    TEST(createTrianglesSlow);
+    benchmark->intermediateTriangleCleanUp();
+    TEST(createTrianglesSmart);
+    benchmark->intermediateTriangleCleanUp();
+    TEST(createTrianglesFast);
+    TEST(createShaderModules);
+    TEST(createPipelines);
 
-      Timer timer;
-      timer.start("Total");
-      benchmark->initialize(initialization);
-      timer.stop();
+    TEST2(singleTriangleDraw, firstDraw, true);
+    TEST2(singleTriangleDraw, secondDraw, true);
+    TEST2(singleTriangleDraw, thirdDraw, true);
 
-      initialization.addResult(timer);
-
-      // initialization.averageWith(results);
-    }
-
-    // Triangles Host
-    {
-      Timer timer;
-      timer.start("Total");
-      benchmark->createTrianglesHost(trianglesHost);
-      timer.stop();
-
-      trianglesHost.addResult(timer);
-    }
-
-    // Triangles Slow
-    {
-      Timer timer;
-      timer.start("Total");
-      benchmark->createTrianglesSlow(trianglesSlow);
-      timer.stop();
-
-      trianglesSlow.addResult(timer);
-    }
-
-    // Triangles Smart
-    {
-      Timer timer;
-      timer.start("Total");
-      benchmark->createTrianglesSmart(trianglesSmart);
-      timer.stop();
-
-      trianglesSmart.addResult(timer);
-    }
-
-    // Triangles Fast
-    {
-      Timer timer;
-      timer.start("Total");
-      benchmark->createTrianglesFast(trianglesFast);
-      timer.stop();
-
-      trianglesFast.addResult(timer);
-    }
-
-    // shaderModules
-    {
-      // ResultCollection results;
-
-      // for (int j = 0; j < BENCHMARK_N; j++) {
-      Timer timer;
-      timer.start("Total");
-      benchmark->createShaderModules(shaderModules);
-      timer.stop();
-      // results.addResult(timer);
-      // }
-
-      shaderModules.addResult(timer);
-
-      // shaderModules.averageWith(results);
-    }
-
-    {
-      ResultCollection results;
-
-      Timer timer;
-      timer.start("Total");
-      benchmark->clean_up(results);
-      timer.stop();
-      results.addResult(timer);
-
-      // clean_up.averageWith(results);
-    }
-
-    initialization.nextIteration();
-    trianglesHost.nextIteration();
-    trianglesSlow.nextIteration();
-    trianglesSmart.nextIteration();
-    trianglesFast.nextIteration();
-    shaderModules.nextIteration();
+    TEST(clean_up);
   }
 
-  std::cout << initialization << std::endl;
-  std::cout << trianglesHost << std::endl;
-  std::cout << trianglesSlow << std::endl;
-  std::cout << trianglesSmart << std::endl;
-  std::cout << trianglesFast << std::endl;
-  std::cout << shaderModules << std::endl;
+  std::cout << initialize << std::endl;
+  std::cout << createTrianglesHost << std::endl;
+  std::cout << createTrianglesSlow << std::endl;
+  std::cout << createTrianglesSmart << std::endl;
+  std::cout << createTrianglesFast << std::endl;
+  std::cout << createShaderModules << std::endl;
+  std::cout << createPipelines << std::endl;
+  std::cout << firstDraw << std::endl;
+  std::cout << secondDraw << std::endl;
+  std::cout << thirdDraw << std::endl;
+  std::cout << clean_up << std::endl;
 }
 
 //
