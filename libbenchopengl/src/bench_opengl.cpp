@@ -111,9 +111,13 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 
 }
 
-void BenchOpenGL::singleTriangleDraw(ResultCollection& resultCollection,
-                                     bool              device) {
-  //
+void BenchOpenGL::singleTriangleDraw(
+	ResultCollection& resultCollection, bool device) {
+
+	for (int i = 0; i < shaderProgramArr.size(); ++i) {
+		gl::glUseProgram(shaderProgramArr.at(i));
+		gl::glDrawArrays(/**/, 0, 3);
+	}
 }
 
 void BenchOpenGL::optimalMultipleTriangleDraw(
