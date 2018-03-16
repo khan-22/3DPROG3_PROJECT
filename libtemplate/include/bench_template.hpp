@@ -5,7 +5,7 @@
 
 #include <string>
 #include <utility>
-
+#include <array>
 #include "result_collection.hpp"
 
 struct Vertex {
