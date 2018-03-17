@@ -116,7 +116,7 @@ void BenchOpenGL::singleTriangleDraw(
 
 	for (int i = 0; i < shaderProgramArr.size(); ++i) {
 		gl::glUseProgram(shaderProgramArr.at(i));
-		//gl::glBindVertexArray();	//dependant on i (or maybe just draw first)
+		//gl::glBindVertexArray();	//just draw first
 		gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
 	}
 }
