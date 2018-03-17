@@ -241,9 +241,10 @@ void BenchVulkan::createTrianglesSlow(ResultCollection& resultCollection) {
   }
 }
 
-void BenchVulkan::thread_createTrianglesSmart(int startIndex,
-                                              int endIndex,
-                                              int threadIndex) {
+void BenchVulkan::thread_createTrianglesSmart(int    startIndex,
+                                              int    endIndex,
+                                              int    threadIndex,
+                                              Timer* timer) {
   const size_t size = 3 * sizeof(Vertex);
 
   int                                                    current = 0;
@@ -328,6 +329,10 @@ void BenchVulkan::thread_createTrianglesSmart(int startIndex,
     _threadContexts[threadIndex].queue.submit(submitInfo, currentFence);
   }
 
+  if (timer) {
+    timer->stop();
+  }
+
   _threadContexts[threadIndex].queue.waitIdle();
 
   for (auto& commandBuffer : commandChain) {
@@ -357,23 +362,28 @@ void BenchVulkan::createTrianglesSmart(ResultCollection& resultCollection) {
                          this,
                          startIndex,
                          endIndex,
-                         i);
+                         i,
+                         nullptr);
 
     startIndex += TRI_PER_THREAD;
     endIndex += TRI_PER_THREAD;
   }
 
+  Timer t;
+  t.start("Work");
   thread_createTrianglesSmart(
-      startIndex, _trianglesDevice.size(), _numberOfThreads - 1);
+      startIndex, _trianglesDevice.size(), _numberOfThreads - 1, &t);
+  resultCollection.addResult(t);
 
   for (auto& thread : threads) {
     thread.join();
   }
 }
 
-void BenchVulkan::thread_createTrianglesFast(int startIndex,
-                                             int endIndex,
-                                             int threadIndex) {
+void BenchVulkan::thread_createTrianglesFast(int    startIndex,
+                                             int    endIndex,
+                                             int    threadIndex,
+                                             Timer* timer) {
   const size_t size = 3 * sizeof(Vertex);
 
   std::vector<std::pair<vk::Buffer, vk::DeviceMemory>> stagings;
@@ -432,6 +442,11 @@ void BenchVulkan::thread_createTrianglesFast(int startIndex,
   submitInfo.pCommandBuffers    = &commandBuffer;
 
   _threadContexts[threadIndex].queue.submit(submitInfo, nullptr);
+
+  if (timer) {
+    timer->stop();
+  }
+
   _threadContexts[threadIndex].queue.waitIdle();
 
   _deviceContext.device.freeCommandBuffers(
@@ -455,14 +470,18 @@ void BenchVulkan::createTrianglesFast(ResultCollection& resultCollection) {
                          this,
                          startIndex,
                          endIndex,
-                         i);
+                         i,
+                         nullptr);
 
     startIndex += TRI_PER_THREAD;
     endIndex += TRI_PER_THREAD;
   }
 
+  Timer t;
+  t.start("Work");
   thread_createTrianglesFast(
-      startIndex, _trianglesDevice.size(), _numberOfThreads - 1);
+      startIndex, _trianglesDevice.size(), _numberOfThreads - 1, &t);
+  resultCollection.addResult(t);
 
   for (auto& thread : threads) {
     thread.join();

@@ -71,12 +71,14 @@ class BenchVulkan : public BenchTemplate {
   void thread_createTrianglesSlow(int startIndex,
                                   int endIndex,
                                   int threadIndex);
-  void thread_createTrianglesSmart(int startIndex,
-                                   int endIndex,
-                                   int threadIndex);
-  void thread_createTrianglesFast(int startIndex,
-                                  int endIndex,
-                                  int threadIndex);
+  void thread_createTrianglesSmart(int    startIndex,
+                                   int    endIndex,
+                                   int    threadIndex,
+                                   Timer* timer);
+  void thread_createTrianglesFast(int    startIndex,
+                                  int    endIndex,
+                                  int    threadIndex,
+                                  Timer* timer);
 
   void thread_createShaderModules(
       int                                        startIndex,
