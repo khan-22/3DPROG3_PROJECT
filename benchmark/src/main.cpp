@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -42,28 +43,53 @@ enum class BENCHMARK_TYPE {
   }
 //
 // The test routine
-void runBenchmark(BENCHMARK_TYPE benchmarkType) {
+void runBenchmark(BENCHMARK_TYPE benchmarkType, int numberOfThreads) {
   std::unique_ptr<BenchTemplate> benchmark = nullptr;
 
   if (benchmarkType == BENCHMARK_TYPE::OPENGL) {
-    benchmark.reset(new BenchOpenGL(1, 10, 10));
+    benchmark.reset(new BenchOpenGL(1, BENCHMARK_N, BENCHMARK_M));
   } else if (benchmarkType == BENCHMARK_TYPE::VULKAN) {
-    benchmark.reset(new BenchVulkan(2, 10, 10));
+    benchmark.reset(new BenchVulkan(numberOfThreads, BENCHMARK_N, BENCHMARK_M));
   }
 
-  ResultCollection initialize;
-  ResultCollection createTrianglesHost;
-  ResultCollection createTrianglesSlow;
-  ResultCollection createTrianglesSmart;
-  ResultCollection createTrianglesFast;
-  ResultCollection createShaderModules;
-  ResultCollection createPipelines;
+  std::string api = benchmarkType == BENCHMARK_TYPE::OPENGL ? "ogl." : "vk.";
+  // std::string cf  = std::string(".") + std::to_string(numberOfThreads) + "."
+  // +
+  //                  std::to_string(BENCHMARK_N) + "." +
+  //                  std::to_string(BENCHMARK_M);
+  std::string cf = std::string(".") + std::to_string(numberOfThreads);
 
-  ResultCollection firstDraw;
-  ResultCollection secondDraw;
-  ResultCollection thirdDraw;
+  char sorter = 'a';
+  auto s      = [&]() { return std::string(1, sorter++) + "."; };
 
-  ResultCollection clean_up;
+  ResultCollection initialize(api + s() + "initialize" + cf);
+  ResultCollection createTrianglesHost(api + s() + "createTrianglesHost" + cf);
+  ResultCollection createTrianglesSlow(api + s() + "createTrianglesSlow" + cf);
+  ResultCollection createTrianglesSmart(api + s() + "createTrianglesSmart" +
+                                        cf);
+  ResultCollection createTrianglesFast(api + s() + "createTrianglesFast" + cf);
+  ResultCollection createShaderModules(api + s() + "createShaderModules" + cf);
+  ResultCollection createPipelines(api + s() + "createPipelines" + cf);
+
+  ResultCollection firstDraw(api + s() + "firstDraw" + cf);
+  ResultCollection secondDraw(api + s() + "secondDraw" + cf);
+  ResultCollection thirdDraw(api + s() + "thirdDraw" + cf);
+
+  ResultCollection clean_up(api + s() + "clean_up" + cf);
+
+  ResultCollection* collections[] = {
+      &initialize,
+      &createTrianglesHost,
+      &createTrianglesSlow,
+      &createTrianglesSmart,
+      &createTrianglesFast,
+      &createShaderModules,
+      &createPipelines,
+      &firstDraw,
+      &secondDraw,
+      &thirdDraw,
+      &clean_up,
+  };
 
   for (int i = 0; i < BENCHMARK_OUTER_RUNS; i++) {
     TEST(initialize);
@@ -84,17 +110,23 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType) {
     TEST(clean_up);
   }
 
-  std::cout << initialize << std::endl;
-  std::cout << createTrianglesHost << std::endl;
-  std::cout << createTrianglesSlow << std::endl;
-  std::cout << createTrianglesSmart << std::endl;
-  std::cout << createTrianglesFast << std::endl;
-  std::cout << createShaderModules << std::endl;
-  std::cout << createPipelines << std::endl;
-  std::cout << firstDraw << std::endl;
-  std::cout << secondDraw << std::endl;
-  std::cout << thirdDraw << std::endl;
-  std::cout << clean_up << std::endl;
+  for (auto& collection : collections) {
+    std::ofstream output;
+    output.open("./output/" + collection->getFilename() + ".txt");
+    output << *collection << std::endl;
+  }
+
+  // std::cout << initialize << std::endl;
+  // std::cout << createTrianglesHost << std::endl;
+  // std::cout << createTrianglesSlow << std::endl;
+  // std::cout << createTrianglesSmart << std::endl;
+  // std::cout << createTrianglesFast << std::endl;
+  // std::cout << createShaderModules << std::endl;
+  // std::cout << createPipelines << std::endl;
+  // std::cout << firstDraw << std::endl;
+  // std::cout << secondDraw << std::endl;
+  // std::cout << thirdDraw << std::endl;
+  // std::cout << clean_up << std::endl;
 }
 
 //
@@ -119,8 +151,11 @@ int main() {
   //
   // std::cout << r << std::endl;
 
-  runBenchmark(BENCHMARK_TYPE::OPENGL);
-  runBenchmark(BENCHMARK_TYPE::VULKAN);
+  runBenchmark(BENCHMARK_TYPE::VULKAN, 1);
+  runBenchmark(BENCHMARK_TYPE::VULKAN, 2);
+  runBenchmark(BENCHMARK_TYPE::VULKAN, 4);
+  runBenchmark(BENCHMARK_TYPE::VULKAN, 8);
+  runBenchmark(BENCHMARK_TYPE::OPENGL, 1);
 
   // { BenchVulkan bv(1, 10, 10); }
   // { BenchOpenGL bo(1, 10, 10); }

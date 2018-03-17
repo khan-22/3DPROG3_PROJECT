@@ -43,10 +43,10 @@ void BenchVulkan::initialize(ResultCollection& resultCollection) {
   resultCollection.addResult(t);
 
 #if USE_VALIDATION_LAYERS
-  t.start("DebugCallback");
+  // t.start("DebugCallback");
   makeDebugCallback();
-  t.stop();
-  resultCollection.addResult(t);
+  // t.stop();
+  // resultCollection.addResult(t);
 #endif  // USE_VALIDATION_LAYERS
 
   t.start("Surface");
@@ -778,8 +778,8 @@ void BenchVulkan::thread_singleTriangleDraw(
   renderPassBeginInfo.renderArea.offset.x = 0;
   renderPassBeginInfo.renderArea.offset.y = 0;
   renderPassBeginInfo.renderArea.extent   = _swapchainContext.extent;
-  // renderPassBeginInfo.clearValueCount     = 1;
-  // renderPassBeginInfo.pClearValues        = &clearColor;
+  renderPassBeginInfo.clearValueCount     = 1;
+  renderPassBeginInfo.pClearValues        = &clearColor;
 
   currentCommandBuffer.begin(beginInfo);
   currentCommandBuffer.beginRenderPass(renderPassBeginInfo,
@@ -814,7 +814,7 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
                                nullptr)
           .value;
 
-  const int DRAWS_PER_THREAD = triangles->size() / _numberOfThreads;
+  const int DRAWS_PER_THREAD = _pipelines.size() / _numberOfThreads;
   int       startIndex       = 0;
   int       endIndex         = DRAWS_PER_THREAD;
 
@@ -1367,7 +1367,7 @@ void BenchVulkan::makeRenderPass() {
   vk::AttachmentDescription colorAttachment = {};
   colorAttachment.format                    = _swapchainContext.imageFormat;
   colorAttachment.samples                   = vk::SampleCountFlagBits::e1;
-  colorAttachment.loadOp                    = vk::AttachmentLoadOp::eLoad;
+  colorAttachment.loadOp                    = vk::AttachmentLoadOp::eClear;
   colorAttachment.storeOp                   = vk::AttachmentStoreOp::eStore;
   colorAttachment.stencilLoadOp             = vk::AttachmentLoadOp::eDontCare;
   colorAttachment.stencilStoreOp            = vk::AttachmentStoreOp::eDontCare;
