@@ -49,7 +49,7 @@ class BenchOpenGL : public BenchTemplate {
  std::array<std::pair<std::string, std::string>, BENCHMARK_N> shaderPairArr; //Array containing all shader source files
  std::array<gl::GLuint, BENCHMARK_N> shaderProgramArr;
   
- std::array<gl::GLuint, BENCHMARK_N> VBOArr;
- std::array<gl::GLuint, BENCHMARK_N> VAOArr;
+ std::array<gl::GLuint, BENCHMARK_N> VBOArr;	//vertex buffer object
+ std::array<gl::GLuint, BENCHMARK_N> VAOArr;	//vertex array object
 };
 #endif  // BENCH_OPENGL_HPP

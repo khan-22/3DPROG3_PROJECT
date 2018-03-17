@@ -119,32 +119,38 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
   }
 }
 
-void BenchOpenGL::singleTriangleDraw(ResultCollection& resultCollection,
-                                     bool              device) {
-  for (int i = 0; i < shaderProgramArr.size(); ++i) {
-    gl::glUseProgram(shaderProgramArr.at(i));
-    // gl::glDrawArrays(/**/, 0, 3);
-  }
+void BenchOpenGL::singleTriangleDraw(
+	ResultCollection& resultCollection, bool device) {
+
+	for (int i = 0; i < shaderProgramArr.size(); ++i) {
+		gl::glUseProgram(shaderProgramArr.at(i));
+		gl::glBindVertexArray(VAOArr.at(0));
+		gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
+	}
 }
 
 void BenchOpenGL::optimalMultipleTriangleDraw(
     ResultCollection& resultCollection, bool device) {
-  for (int i = 0; i < shaderProgramArr.size(); ++i) {
-    gl::glUseProgram(shaderProgramArr.at(i));
-    for (int j = 0; j < BENCHMARK_M; ++j) {
-      // gl::glDrawArrays(/**/, 0, 3);
-    }
-  }
+
+	for (int i = 0; i < shaderProgramArr.size(); ++i) {
+		gl::glUseProgram(shaderProgramArr.at(i));
+		for (int j = 0; j < BENCHMARK_M; ++j) {
+			gl::glBindVertexArray(VAOArr.at(j));
+			gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
+		}
+	}
 }
 
-void BenchOpenGL::badMultipleTriangleDraw(ResultCollection& resultCollection,
-                                          bool              device) {
-  for (int i = 0; i < BENCHMARK_M; ++i) {
-    for (int j = 0; j < shaderProgramArr.size(); ++j) {
-      gl::glUseProgram(shaderProgramArr.at(j));
-      // gl::glDrawArrays(/**/, 0, 3);	//dependant on i
-    }
-  }
+void BenchOpenGL::badMultipleTriangleDraw(
+	ResultCollection& resultCollection, bool device) {
+	
+	for (int i = 0; i < BENCHMARK_M; ++i) {
+		for (int j = 0; j < shaderProgramArr.size(); ++j) {
+			gl::glUseProgram(shaderProgramArr.at(j));
+			gl::glBindVertexArray(VAOArr.at(j));
+			gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
+		}
+	}
 }
 
 void BenchOpenGL::clean_up(ResultCollection& resultCollection) {
