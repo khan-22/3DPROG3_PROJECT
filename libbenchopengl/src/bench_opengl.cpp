@@ -120,10 +120,12 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
     gl::glLinkProgram(shaderProgram);
 
     // Temporary
-    int success;
+	int  success;
+	char infoLog[512];
     gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
     if (!success) {
-      printf("\nERROR CREATING SHADER PROGRAM");
+		gl::glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
     //
 
