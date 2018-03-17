@@ -77,12 +77,12 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
   for (int i = 0; i < shaderProgramArr.size(); ++i) {
     const char* src;
     GLuint      VS, FS;
-    VS  = gl::glCreateShader(gl::GLenum::GL_VERTEX_SHADER);
+    VS  = gl::glCreateShader(static_cast<gl::GLenum>(GL_VERTEX_SHADER));
     src = shaderPairArr[i].first.c_str();
     gl::glShaderSource(VS, 1, &src, NULL);
     gl::glCompileShader(VS);
 
-    FS  = gl::glCreateShader(gl::GLenum::GL_FRAGMENT_SHADER);
+    FS  = gl::glCreateShader(static_cast<gl::GLenum>(GL_FRAGMENT_SHADER));
     src = shaderPairArr[i].second.c_str();
     gl::glShaderSource(FS, 1, &src, NULL);
     gl::glCompileShader(FS);
@@ -95,7 +95,8 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 
     // Temporary
     int success;
-    gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
+    gl::glGetShaderiv(
+        shaderProgram, static_cast<gl::GLenum>(GL_LINK_STATUS), &success);
     if (!success) {
       printf("\n\nERROR CREATING SHADER PROGRAM\n\n");
     }
