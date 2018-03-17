@@ -63,15 +63,15 @@ void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
 }
 
 void BenchOpenGL::createTrianglesSlow(ResultCollection& resultCollection) {
-  //
+	createTrianglesHost(resultCollection);
 }
 
 void BenchOpenGL::createTrianglesSmart(ResultCollection& resultCollection) {
-  //
+	createTrianglesHost(resultCollection);
 }
 
 void BenchOpenGL::createTrianglesFast(ResultCollection& resultCollection) {
-  //
+	createTrianglesHost(resultCollection);
 }
 
 void BenchOpenGL::intermediateTriangleCleanUp() {
