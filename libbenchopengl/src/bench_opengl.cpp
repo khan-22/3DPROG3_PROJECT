@@ -120,14 +120,32 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
     gl::glLinkProgram(shaderProgram);
 
     // Temporary
-	int  success;
-	char infoLog[512];
-    gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
-    if (!success) {
-		gl::glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    int  success;
+    char infoLog[1024];
+
+    gl::glGetShaderiv(VS, gl::GLenum::GL_COMPILE_STATUS, &success);
+    if (success == false) {
+      gl::glGetShaderInfoLog(VS, 1024, nullptr, infoLog);
+      std::cout << "ERROR VERTEX Shader linking failed!\n"
+                << infoLog << std::endl;
+    }
+
+    gl::glGetShaderiv(FS, gl::GLenum::GL_COMPILE_STATUS, &success);
+    if (success == false) {
+      gl::glGetShaderInfoLog(FS, 1024, nullptr, infoLog);
+      std::cout << "ERROR FRAGMENT Shader linking failed!\n"
+                << infoLog << std::endl;
+    }
+
+    gl::glGetProgramiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
+    if (success == false) {
+      gl::glGetShaderInfoLog(shaderProgram, 1024, nullptr, infoLog);
+      std::cout << "ERROR Shader linking failed!\n" << infoLog << std::endl;
     }
     //
+
+    gl::glDetachShader(shaderProgram, VS);
+    gl::glDetachShader(shaderProgram, FS);
 
     gl::glDeleteShader(VS);
     gl::glDeleteShader(FS);
