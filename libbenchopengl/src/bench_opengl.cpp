@@ -29,6 +29,10 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
   _window = glfwCreateWindow(_WIDTH, _HEIGHT, _TITLE.c_str(), nullptr, nullptr);
+  if (!_window) {
+    std::cerr << "Failed to create window" << std::endl;
+    std::exit(EXIT_FAILURE);
+  }
   glfwMakeContextCurrent(_window);
   t.stop();
   resultCollection.addResult(t);
