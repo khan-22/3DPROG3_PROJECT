@@ -37,23 +37,29 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
 }
 
 void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
+  for (int i = 0; i < BENCHMARK_N; ++i) {
+    gl::glGenVertexArrays(1, &VAOArr[i]);
+    gl::glBindVertexArray(VAOArr[i]);
 
-	for (int i = 0; i < BENCHMARK_N; ++i)
-	{
-		gl::glGenVertexArrays(1, &VAOArr[i]);
-		gl::glBindVertexArray(VAOArr[i]);
+    std::array<Vertex, 3> triangle = getNextTriangle();
+    gl::glGenBuffers(1, &VBOArr[i]);
+    gl::glBindBuffer(static_cast<gl::GLenum>(GL_ARRAY_BUFFER), VBOArr[i]);
+    gl::glBufferData(static_cast<gl::GLenum>(GL_ARRAY_BUFFER),
+                     triangle.size() * sizeof(triangle[0]),
+                     triangle.data(),
+                     static_cast<gl::GLenum>(GL_STATIC_DRAW));
 
-		std::array<Vertex, 3> triangle = getNextTriangle();
-		gl::glGenBuffers(1, &VBOArr[i]);
-		gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, VBOArr[i]);
-		gl::glBufferData(gl::GLenum::GL_ARRAY_BUFFER, triangle.size() * sizeof(triangle[0]), triangle.data(), gl::GLenum::GL_STATIC_DRAW);
+    gl::glVertexAttribPointer(0,
+                              3,
+                              static_cast<gl::GLenum>(GL_FLOAT),
+                              GL_FALSE,
+                              sizeof(Vertex),
+                              (void*)0);
+    gl::glEnableVertexAttribArray(0);
 
-		gl::glVertexAttribPointer(0, 3, static_cast<gl::GLenum>(GL_FLOAT), GL_FALSE, sizeof(Vertex), (void*)0);
-		gl::glEnableVertexAttribArray(0);
-
-		gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, 0);
-		gl::glBindVertexArray(0);
-	}
+    gl::glBindBuffer(static_cast<gl::GLenum>(GL_ARRAY_BUFFER), 0);
+    gl::glBindVertexArray(0);
+  }
 }
 
 void BenchOpenGL::createTrianglesSlow(ResultCollection& resultCollection) {
@@ -101,12 +107,12 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
   for (int i = 0; i < shaderProgramArr.size(); ++i) {
     const char* src;
     GLuint      VS, FS;
-    VS  = gl::glCreateShader(gl::GLenum::GL_VERTEX_SHADER);
+    VS  = gl::glCreateShader(static_cast<gl::GLenum>(GL_VERTEX_SHADER));
     src = shaderPairArr[i].first.c_str();
     gl::glShaderSource(VS, 1, &src, NULL);
     gl::glCompileShader(VS);
 
-    FS  = gl::glCreateShader(gl::GLenum::GL_FRAGMENT_SHADER);
+    FS  = gl::glCreateShader(static_cast<gl::GLenum>(GL_FRAGMENT_SHADER));
     src = shaderPairArr[i].second.c_str();
     gl::glShaderSource(FS, 1, &src, NULL);
     gl::glCompileShader(FS);
@@ -119,7 +125,8 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 
     // Temporary
     int success;
-    gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
+    gl::glGetShaderiv(
+        shaderProgram, static_cast<gl::GLenum>(GL_LINK_STATUS), &success);
     if (!success) {
       printf("\n\nERROR CREATING SHADER PROGRAM\n\n");
     }

@@ -43,10 +43,10 @@ void BenchVulkan::initialize(ResultCollection& resultCollection) {
   resultCollection.addResult(t);
 
 #if USE_VALIDATION_LAYERS
-  t.start("DebugCallback");
+  // t.start("DebugCallback");
   makeDebugCallback();
-  t.stop();
-  resultCollection.addResult(t);
+  // t.stop();
+  // resultCollection.addResult(t);
 #endif  // USE_VALIDATION_LAYERS
 
   t.start("Surface");
@@ -778,8 +778,8 @@ void BenchVulkan::thread_singleTriangleDraw(
   renderPassBeginInfo.renderArea.offset.x = 0;
   renderPassBeginInfo.renderArea.offset.y = 0;
   renderPassBeginInfo.renderArea.extent   = _swapchainContext.extent;
-  // renderPassBeginInfo.clearValueCount     = 1;
-  // renderPassBeginInfo.pClearValues        = &clearColor;
+  renderPassBeginInfo.clearValueCount     = 1;
+  renderPassBeginInfo.pClearValues        = &clearColor;
 
   currentCommandBuffer.begin(beginInfo);
   currentCommandBuffer.beginRenderPass(renderPassBeginInfo,
@@ -814,7 +814,7 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
                                nullptr)
           .value;
 
-  const int DRAWS_PER_THREAD = triangles->size() / _numberOfThreads;
+  const int DRAWS_PER_THREAD = _pipelines.size() / _numberOfThreads;
   int       startIndex       = 0;
   int       endIndex         = DRAWS_PER_THREAD;
 
@@ -844,6 +844,43 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
 
   t.start("Submission");
   // Rendering
+  drawSubmission();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Waiting");
+  _threadContexts[_numberOfThreads - 1].queue.waitIdle();
+  t.stop();
+  resultCollection.addResult(t);
+}
+
+void BenchVulkan::thread_optimalMultiTriangleDraw(
+    int                                startIndex,
+    int                                endIndex,
+    int                                threadIndex,
+    std::array<Triangle, BENCHMARK_N>* triangles) {
+  //
+}
+
+void BenchVulkan::optimalMultipleTriangleDraw(
+    ResultCollection& resultCollection, bool device) {
+  //
+}
+
+void BenchVulkan::thread_badMultipleTriangleDraw(
+    int                                startIndex,
+    int                                endIndex,
+    int                                threadIndex,
+    std::array<Triangle, BENCHMARK_N>* triangles) {
+  //
+}
+
+void BenchVulkan::badMultipleTriangleDraw(ResultCollection& resultCollection,
+                                          bool              device) {
+  //
+}
+
+void BenchVulkan::drawSubmission() {
   {
     std::vector<vk::CommandBuffer> commandBuffers;
     commandBuffers.reserve(_numberOfThreads);
@@ -888,39 +925,6 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
 
     _threadContexts[_numberOfThreads - 1].queue.presentKHR(presentInfo);
   }
-  t.stop();
-  resultCollection.addResult(t);
-
-  t.start("Waiting");
-  _threadContexts[_numberOfThreads - 1].queue.waitIdle();
-  t.stop();
-  resultCollection.addResult(t);
-}
-
-void BenchVulkan::thread_optimalMultiTriangleDraw(
-    int                                startIndex,
-    int                                endIndex,
-    int                                threadIndex,
-    std::array<Triangle, BENCHMARK_N>* triangles) {
-  //
-}
-
-void BenchVulkan::optimalMultipleTriangleDraw(
-    ResultCollection& resultCollection, bool device) {
-  //
-}
-
-void BenchVulkan::thread_badMultipleTriangleDraw(
-    int                                startIndex,
-    int                                endIndex,
-    int                                threadIndex,
-    std::array<Triangle, BENCHMARK_N>* triangles) {
-  //
-}
-
-void BenchVulkan::badMultipleTriangleDraw(ResultCollection& resultCollection,
-                                          bool              device) {
-  //
 }
 
 void BenchVulkan::clean_up(ResultCollection& resultCollection) {
@@ -1367,7 +1371,7 @@ void BenchVulkan::makeRenderPass() {
   vk::AttachmentDescription colorAttachment = {};
   colorAttachment.format                    = _swapchainContext.imageFormat;
   colorAttachment.samples                   = vk::SampleCountFlagBits::e1;
-  colorAttachment.loadOp                    = vk::AttachmentLoadOp::eLoad;
+  colorAttachment.loadOp                    = vk::AttachmentLoadOp::eClear;
   colorAttachment.storeOp                   = vk::AttachmentStoreOp::eStore;
   colorAttachment.stencilLoadOp             = vk::AttachmentLoadOp::eDontCare;
   colorAttachment.stencilStoreOp            = vk::AttachmentStoreOp::eDontCare;

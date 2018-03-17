@@ -17,7 +17,8 @@ const std::string& Timer::getColumnHead() const {
 
 //
 // Place to store all our results
-ResultCollection::ResultCollection() {
+ResultCollection::ResultCollection(std::string filename)
+    : _filename(std::move(filename)) {
   _results.reserve(BENCHMARK_OUTER_RUNS);
   _results.emplace_back();  //
   _results.back().reserve(20);
@@ -64,12 +65,18 @@ void ResultCollection::nextIteration() {
   _averageWeight = 1;
 }
 
+std::string ResultCollection::getFilename() const {
+  return _filename;
+}
+
 //
 // stream overload to easily print our results
 std::ostream& operator<<(std::ostream& a, const ResultCollection& b) {
-  a << "Timestamp\t";
+  a << "#" << b._filename << std::endl;
+  a << "\"Timestamp\"\t";
   for (auto& result : b._results[0]) {
-    a << result.getColumnHead() << "\t";
+    a << "\"" << result.getColumnHead() << "\""
+      << "\t";
   }
   for (auto& row : b._results) {
     if (row.size() > 0) {
@@ -82,6 +89,26 @@ std::ostream& operator<<(std::ostream& a, const ResultCollection& b) {
     }
   }
 
+  a << std::endl << std::endl << std::endl;
+  // a << "\"Timestamp\"\t";
+  for (auto& result : b._results[0]) {
+    a << "\"" << result.getColumnHead() << "\""
+      << "\t";
+  }
   a << std::endl;
+  std::vector<double> averages(b._results[0].size());
+  for (auto& row : b._results) {
+    if (row.size() > 0) {
+      for (int i = 0; i < row.size(); i++) {
+        averages[i] += row[i].time;
+      }
+    }
+  }
+  for (auto& avg : averages) {
+    avg /= b._results.size() - 1;
+    a << avg << "\t";
+  }
+  a << std::endl;
+
   return a;
 }
