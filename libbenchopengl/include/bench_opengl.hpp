@@ -45,9 +45,11 @@ class BenchOpenGL : public BenchTemplate {
 
  private:  // Functions
  private:  // Varibles
-  GLFWwindow* _window = nullptr;
-  std::array<std::pair<std::string, std::string>, BENCHMARK_N>
-                                      shaderPairArr;  // Array containing all shader source files
-  std::array<gl::GLuint, BENCHMARK_N> shaderProgramArr;
+ GLFWwindow* _window = nullptr;
+ std::array<std::pair<std::string, std::string>, BENCHMARK_N> shaderPairArr; //Array containing all shader source files
+ std::array<gl::GLuint, BENCHMARK_N> shaderProgramArr;
+  
+ std::array<gl::GLuint, BENCHMARK_N> VBOArr;
+ std::array<gl::GLuint, BENCHMARK_N> VAOArr;
 };
 #endif  // BENCH_OPENGL_HPP

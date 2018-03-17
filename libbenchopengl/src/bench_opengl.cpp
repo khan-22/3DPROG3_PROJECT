@@ -34,13 +34,26 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
   resultCollection.addResult(t);
 
   glbinding::Binding::initialize();
-
-  createShaderModules(resultCollection);
-  createPipelines(resultCollection);
 }
 
 void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
-  //
+
+	for (int i = 0; i < BENCHMARK_N; ++i)
+	{
+		gl::glGenVertexArrays(1, &VAOArr[i]);
+		gl::glBindVertexArray(VAOArr[i]);
+
+		std::array<Vertex, 3> triangle = getNextTriangle();
+		gl::glGenBuffers(1, &VBOArr[i]);
+		gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, VBOArr[i]);
+		gl::glBufferData(gl::GLenum::GL_ARRAY_BUFFER, triangle.size() * sizeof(triangle[0]), triangle.data(), gl::GLenum::GL_STATIC_DRAW);
+
+		gl::glVertexAttribPointer(0, 3, static_cast<gl::GLenum>(GL_FLOAT), GL_FALSE, sizeof(Vertex), (void*)0);
+		gl::glEnableVertexAttribArray(0);
+
+		gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, 0);
+		gl::glBindVertexArray(0);
+	}
 }
 
 void BenchOpenGL::createTrianglesSlow(ResultCollection& resultCollection) {
