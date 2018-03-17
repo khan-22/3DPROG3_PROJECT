@@ -128,7 +128,7 @@ void BenchOpenGL::singleTriangleDraw(
 
 	for (int i = 0; i < shaderProgramArr.size(); ++i) {
 		gl::glUseProgram(shaderProgramArr.at(i));
-		//gl::glBindVertexArray();	//just draw first
+		gl::glBindVertexArray(VAOArr.at(0));
 		gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
 	}
 }
@@ -139,7 +139,7 @@ void BenchOpenGL::optimalMultipleTriangleDraw(
 	for (int i = 0; i < shaderProgramArr.size(); ++i) {
 		gl::glUseProgram(shaderProgramArr.at(i));
 		for (int j = 0; j < BENCHMARK_M; ++j) {
-			//gl::glBindVertexArray();	//dependant on j
+			gl::glBindVertexArray(VAOArr.at(j));
 			gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
 		}
 	}
@@ -151,7 +151,7 @@ void BenchOpenGL::badMultipleTriangleDraw(
 	for (int i = 0; i < BENCHMARK_M; ++i) {
 		for (int j = 0; j < shaderProgramArr.size(); ++j) {
 			gl::glUseProgram(shaderProgramArr.at(j));
-			//gl::glBindVertexArray();	//dependant on i & j
+			gl::glBindVertexArray(VAOArr.at(j));
 			gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
 		}
 	}
