@@ -35,7 +35,6 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
 
   glbinding::Binding::initialize();
 
-
   createShaderModules(resultCollection);
   createPipelines(resultCollection);
   createTrianglesHost(resultCollection);
@@ -79,84 +78,77 @@ void BenchOpenGL::intermediateTriangleCleanUp() {
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
   auto sourcePairOriginal = loadShaderSource();
- 
 
-  for (auto &shaderPair : shaderPairArr)
-  {
-	  auto shaderPairCopy  = sourcePairOriginal;
-	  auto define		   = getNextDefine();
-	  shaderPairCopy.first = define + shaderPairCopy.first; //Add random defines (colors) to the top of the VS
-	  shaderPair		   = shaderPairCopy;
+  for (auto& shaderPair : shaderPairArr) {
+    auto shaderPairCopy = sourcePairOriginal;
+    auto define         = getNextDefine();
+    shaderPairCopy.first =
+        define +
+        shaderPairCopy
+            .first;  // Add random defines (colors) to the top of the VS
+    shaderPair = shaderPairCopy;
   }
-
 }
 
 void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
+  for (int i = 0; i < shaderProgramArr.size(); ++i) {
+    const char* src;
+    GLuint      VS, FS;
+    VS  = gl::glCreateShader(gl::GLenum::GL_VERTEX_SHADER);
+    src = shaderPairArr[i].first.c_str();
+    gl::glShaderSource(VS, 1, &src, NULL);
+    gl::glCompileShader(VS);
 
-	for (int i = 0; i < shaderProgramArr.size(); ++i)
-	{
-		const char *src;
-		GLuint VS, FS;
-		VS	= gl::glCreateShader(gl::GLenum::GL_VERTEX_SHADER);
-		src = shaderPairArr[i].first.c_str();
-		gl::glShaderSource(VS, 1, &src, NULL);
-		gl::glCompileShader(VS);
+    FS  = gl::glCreateShader(gl::GLenum::GL_FRAGMENT_SHADER);
+    src = shaderPairArr[i].second.c_str();
+    gl::glShaderSource(FS, 1, &src, NULL);
+    gl::glCompileShader(FS);
 
-		FS	= gl::glCreateShader(gl::GLenum::GL_FRAGMENT_SHADER);
-		src = shaderPairArr[i].second.c_str();
-		gl::glShaderSource(FS, 1, &src, NULL);
-		gl::glCompileShader(FS);
+    GLuint shaderProgram;
+    shaderProgram = gl::glCreateProgram();
+    gl::glAttachShader(shaderProgram, VS);
+    gl::glAttachShader(shaderProgram, FS);
+    gl::glLinkProgram(shaderProgram);
 
-		GLuint shaderProgram;
-		shaderProgram = gl::glCreateProgram();
-		gl::glAttachShader(shaderProgram, VS);
-		gl::glAttachShader(shaderProgram, FS);
-		gl::glLinkProgram(shaderProgram);
+    // Temporary
+    int success;
+    gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
+    if (!success) {
+      printf("\n\nERROR CREATING SHADER PROGRAM\n\n");
+    }
+    //
 
-		//Temporary
-		int  success;
-		gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
-		if (!success)
-		{
-			printf("\n\nERROR CREATING SHADER PROGRAM\n\n");
-		}
-		//
-
-		gl::glDeleteShader(VS);
-		gl::glDeleteShader(FS);
-	}
-
+    gl::glDeleteShader(VS);
+    gl::glDeleteShader(FS);
+  }
 }
 
-void BenchOpenGL::singleTriangleDraw(
-	ResultCollection& resultCollection, bool device) {
-
-	for (int i = 0; i < shaderProgramArr.size(); ++i) {
-		gl::glUseProgram(shaderProgramArr.at(i));
-		//gl::glDrawArrays(/**/, 0, 3);
-	}
+void BenchOpenGL::singleTriangleDraw(ResultCollection& resultCollection,
+                                     bool              device) {
+  for (int i = 0; i < shaderProgramArr.size(); ++i) {
+    gl::glUseProgram(shaderProgramArr.at(i));
+    // gl::glDrawArrays(/**/, 0, 3);
+  }
 }
 
 void BenchOpenGL::optimalMultipleTriangleDraw(
     ResultCollection& resultCollection, bool device) {
-
-	for (int i = 0; i < shaderProgramArr.size(); ++i) {
-		gl::glUseProgram(shaderProgramArr.at(i));
-		for (int j = 0; j < BENCHMARK_M; ++j) {
-			//gl::glDrawArrays(/**/, 0, 3);
-		}
-	}
+  for (int i = 0; i < shaderProgramArr.size(); ++i) {
+    gl::glUseProgram(shaderProgramArr.at(i));
+    for (int j = 0; j < BENCHMARK_M; ++j) {
+      // gl::glDrawArrays(/**/, 0, 3);
+    }
+  }
 }
 
-void BenchOpenGL::badMultipleTriangleDraw(
-	ResultCollection& resultCollection, bool device) {
-	
-	for (int i = 0; i < BENCHMARK_M; ++i) {
-		for (int j = 0; j < shaderProgramArr.size(); ++j) {
-			gl::glUseProgram(shaderProgramArr.at(j));
-			//gl::glDrawArrays(/**/, 0, 3);	//dependant on i
-		}
-	}
+void BenchOpenGL::badMultipleTriangleDraw(ResultCollection& resultCollection,
+                                          bool              device) {
+  for (int i = 0; i < BENCHMARK_M; ++i) {
+    for (int j = 0; j < shaderProgramArr.size(); ++j) {
+      gl::glUseProgram(shaderProgramArr.at(j));
+      // gl::glDrawArrays(/**/, 0, 3);	//dependant on i
+    }
+  }
 }
 
 void BenchOpenGL::clean_up(ResultCollection& resultCollection) {

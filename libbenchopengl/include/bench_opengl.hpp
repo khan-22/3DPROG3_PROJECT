@@ -12,7 +12,6 @@
 
 #include <string>
 
-
 class BenchOpenGL : public BenchTemplate {
  public:
   BenchOpenGL(int numberOfThreads, int N, int M);
