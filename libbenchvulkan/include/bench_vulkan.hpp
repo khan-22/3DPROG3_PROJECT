@@ -101,6 +101,8 @@ class BenchVulkan : public BenchTemplate {
       int                                threadIndex,
       std::array<Triangle, BENCHMARK_N>* triangles);
 
+  void drawSubmission();
+
   uint32_t findMemoryType(uint32_t                typeFilter,
                           vk::MemoryPropertyFlags properties);
 

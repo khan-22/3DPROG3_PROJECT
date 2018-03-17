@@ -844,6 +844,43 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
 
   t.start("Submission");
   // Rendering
+  drawSubmission();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Waiting");
+  _threadContexts[_numberOfThreads - 1].queue.waitIdle();
+  t.stop();
+  resultCollection.addResult(t);
+}
+
+void BenchVulkan::thread_optimalMultiTriangleDraw(
+    int                                startIndex,
+    int                                endIndex,
+    int                                threadIndex,
+    std::array<Triangle, BENCHMARK_N>* triangles) {
+  //
+}
+
+void BenchVulkan::optimalMultipleTriangleDraw(
+    ResultCollection& resultCollection, bool device) {
+  //
+}
+
+void BenchVulkan::thread_badMultipleTriangleDraw(
+    int                                startIndex,
+    int                                endIndex,
+    int                                threadIndex,
+    std::array<Triangle, BENCHMARK_N>* triangles) {
+  //
+}
+
+void BenchVulkan::badMultipleTriangleDraw(ResultCollection& resultCollection,
+                                          bool              device) {
+  //
+}
+
+void BenchVulkan::drawSubmission() {
   {
     std::vector<vk::CommandBuffer> commandBuffers;
     commandBuffers.reserve(_numberOfThreads);
@@ -888,39 +925,6 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
 
     _threadContexts[_numberOfThreads - 1].queue.presentKHR(presentInfo);
   }
-  t.stop();
-  resultCollection.addResult(t);
-
-  t.start("Waiting");
-  _threadContexts[_numberOfThreads - 1].queue.waitIdle();
-  t.stop();
-  resultCollection.addResult(t);
-}
-
-void BenchVulkan::thread_optimalMultiTriangleDraw(
-    int                                startIndex,
-    int                                endIndex,
-    int                                threadIndex,
-    std::array<Triangle, BENCHMARK_N>* triangles) {
-  //
-}
-
-void BenchVulkan::optimalMultipleTriangleDraw(
-    ResultCollection& resultCollection, bool device) {
-  //
-}
-
-void BenchVulkan::thread_badMultipleTriangleDraw(
-    int                                startIndex,
-    int                                endIndex,
-    int                                threadIndex,
-    std::array<Triangle, BENCHMARK_N>* triangles) {
-  //
-}
-
-void BenchVulkan::badMultipleTriangleDraw(ResultCollection& resultCollection,
-                                          bool              device) {
-  //
 }
 
 void BenchVulkan::clean_up(ResultCollection& resultCollection) {
