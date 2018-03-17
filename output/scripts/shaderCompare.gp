@@ -1,4 +1,4 @@
-call "Header.gp" 512 (768 - 200)
+call "Header.gp" 768 (768 - 200)
 
 set output "shaderCompare.png"
 
@@ -13,7 +13,7 @@ set style fill solid 0.7
 set boxwidth 0.7
 # set facecolor #FFFFFF
 
-set tmargin at screen 0.90
+set tmargin at screen 0.80
 set bmargin at screen 0.2
 
 # set key outside
@@ -32,36 +32,50 @@ stats "../vk.f.createShaderModules.8.txt" i 0 using 3 nooutput
 # set arrow 3 from 7, screen 0.6 to 7, screen 0.5 head size 5.0,2.0 front filled
 
 set border 8
-LMARGIN=0.15
-XWIDTH=0.40
+LMARGIN=0.08
+XWIDTH=0.30
 RMARGIN=0.94
 
 set label 3 "Creating 2N shader modules" at screen 0.5, screen 0.93 font ",20" center
 
-set label 2 "Vulkan" at graph 0.3, graph 0.85 font ",20" center
-# set title ""
+set label 2 "Spir-V\n(General)" at graph 0.3, graph 0.85 font ",20" center
+set title "GLSL into Spir-V"
 set ylabel "Time in seconds" offset 2.5 font ",16"
 set lmargin at screen (LMARGIN)
 set rmargin at screen (LMARGIN+XWIDTH)
 set xrange[-1:4]
-set yrange[0:STATS_max+0.1]
+set yrange[0:STATS_max*1.6]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
 plot "../vk.f.createShaderModules.1.txt" i 0 using (0):3 with boxplot lc rgb COLOR_V, \
      "../vk.f.createShaderModules.2.txt" i 0 using (1):3 with boxplot lc rgb COLOR_V, \
      "../vk.f.createShaderModules.4.txt" i 0 using (2):3 with boxplot lc rgb COLOR_V, \
      "../vk.f.createShaderModules.8.txt" i 0 using (3):3 with boxplot lc rgb COLOR_V,
 
-
-unset border
-set label 2 "OpenGL" at graph 0.4, graph 0.85 font ",20" center
-# set title "Naïve"
+set label 2 "Vulkan" at graph 0.3, graph 0.85 font ",20" center
+set title "Spir-V into native\n+ Pipeline creation"
 unset ylabel
 set ytics format ""
 set lmargin at screen (LMARGIN+XWIDTH)
+set rmargin at screen (LMARGIN+XWIDTH*2)
+set xrange[-1:4]
+set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
+plot "../vk.g.createPipelines.1.txt" i 0 using (0):2 with boxplot lc rgb "#770111", \
+     "../vk.g.createPipelines.2.txt" i 0 using (1):2 with boxplot lc rgb "#770111", \
+     "../vk.g.createPipelines.4.txt" i 0 using (2):2 with boxplot lc rgb "#770111", \
+     "../vk.g.createPipelines.8.txt" i 0 using (3):2 with boxplot lc rgb "#770111",
+
+
+
+unset border
+set label 2 "OpenGL" at graph 0.4, graph 0.85 font ",20" center
+set title "GLSL into shader program"
+unset ylabel
+set ytics format ""
+set lmargin at screen (LMARGIN+XWIDTH*2)
 set rmargin at screen (RMARGIN)
 set xrange[-2:2]
 set xtics("1 Thread" 0)
-plot "../ogl.f.createShaderModules.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
+plot "../ogl.g.createPipelines.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
 
 
 
