@@ -38,6 +38,9 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
   resultCollection.addResult(t);
 
   glbinding::Binding::initialize();
+  gl::glClearColor(0.f, 0.3f, 0.6f, 1.f);
+
+  gl::glFinish();
 }
 
 void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
@@ -60,6 +63,8 @@ void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
     gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, 0);
     gl::glBindVertexArray(0);
   }
+
+  gl::glFinish();
 }
 
 void BenchOpenGL::createTrianglesSlow(ResultCollection& resultCollection) {
@@ -97,6 +102,8 @@ void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
             .first;  // Add random defines (colors) to the top of the VS
     shaderPair = shaderPairCopy;
   }
+
+  gl::glFinish();
 }
 
 void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
@@ -144,7 +151,7 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
     }
     //
 
-	shaderProgramArr[i] = shaderProgram;
+    shaderProgramArr[i] = shaderProgram;
 
     gl::glDetachShader(shaderProgram, VS);
     gl::glDetachShader(shaderProgram, FS);
@@ -152,19 +159,27 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
     gl::glDeleteShader(VS);
     gl::glDeleteShader(FS);
   }
+
+  gl::glFinish();
 }
 
 void BenchOpenGL::singleTriangleDraw(ResultCollection& resultCollection,
                                      bool              device) {
+  gl::glClear(gl::ClearBufferMask::GL_COLOR_BUFFER_BIT);
+
   for (int i = 0; i < shaderProgramArr.size(); ++i) {
     gl::glUseProgram(shaderProgramArr.at(i));
-    gl::glBindVertexArray(VAOArr.at(0));
+    gl::glBindVertexArray(VAOArr.at(i));
     gl::glDrawArrays(gl::GLenum::GL_TRIANGLES, 0, 3);
   }
+
+  glfwSwapBuffers(_window);
+  gl::glFinish();
 }
 
 void BenchOpenGL::optimalMultipleTriangleDraw(
     ResultCollection& resultCollection, bool device) {
+  gl::glClear(gl::ClearBufferMask::GL_COLOR_BUFFER_BIT);
   for (int i = 0; i < shaderProgramArr.size(); ++i) {
     gl::glUseProgram(shaderProgramArr.at(i));
     for (int j = 0; j < BENCHMARK_M; ++j) {
@@ -172,10 +187,15 @@ void BenchOpenGL::optimalMultipleTriangleDraw(
       gl::glDrawArrays(gl::GLenum::GL_TRIANGLES, 0, 3);
     }
   }
+
+  glfwSwapBuffers(_window);
+
+  gl::glFinish();
 }
 
 void BenchOpenGL::badMultipleTriangleDraw(ResultCollection& resultCollection,
                                           bool              device) {
+  gl::glClear(gl::ClearBufferMask::GL_COLOR_BUFFER_BIT);
   for (int i = 0; i < BENCHMARK_M; ++i) {
     for (int j = 0; j < shaderProgramArr.size(); ++j) {
       gl::glUseProgram(shaderProgramArr.at(j));
@@ -183,6 +203,10 @@ void BenchOpenGL::badMultipleTriangleDraw(ResultCollection& resultCollection,
       gl::glDrawArrays(gl::GLenum::GL_TRIANGLES, 0, 3);
     }
   }
+
+  glfwSwapBuffers(_window);
+
+  gl::glFinish();
 }
 
 void BenchOpenGL::clean_up(ResultCollection& resultCollection) {

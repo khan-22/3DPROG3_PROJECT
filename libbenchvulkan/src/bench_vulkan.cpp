@@ -789,10 +789,10 @@ void BenchVulkan::thread_singleTriangleDraw(
   beginInfo.pInheritanceInfo = nullptr;
 
   vk::ClearValue clearColor;
-  clearColor.color.float32[0] = 0.f;
-  clearColor.color.float32[1] = 1.f;
-  clearColor.color.float32[2] = 1.f;
-  clearColor.color.float32[3] = 1.f;
+  clearColor.color.float32[0] = 0.6f;
+  clearColor.color.float32[1] = 0.0f;
+  clearColor.color.float32[2] = 0.3f;
+  clearColor.color.float32[3] = 1.0f;
 
   vk::RenderPassBeginInfo renderPassBeginInfo;
   renderPassBeginInfo.renderPass = _renderContext.renderPass;
