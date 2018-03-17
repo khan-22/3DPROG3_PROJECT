@@ -220,7 +220,7 @@ class BenchVulkan : public BenchTemplate {
     return ______pf;                                                          \
   }()
 
-#if 1
+#if 0
 #define CRITICAL(call, msg)                                        \
   {                                                                \
     if (static_cast<vk::Result>((call)) != vk::Result::eSuccess) { \
@@ -230,7 +230,7 @@ class BenchVulkan : public BenchTemplate {
   }
 #else
 #define CRITICAL(call, msg) \
-  { (call) }
+  { (call); }
 #endif
 
 //

@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <thread>
-#include <mutex>
 
 #include <shaderc/shaderc.hpp>
 
@@ -249,12 +248,14 @@ void BenchVulkan::thread_createTrianglesSmart(int    startIndex,
                                               int    endIndex,
                                               int    threadIndex,
                                               Timer* timer) {
+  const int CHAIN_SIZE = 5;
+
   const size_t size = 3 * sizeof(Vertex);
 
-  int                                                    current = 0;
-  std::array<vk::CommandBuffer, 3>                       commandChain;
-  std::array<vk::Fence, 3>                               fenceChain;
-  std::array<std::pair<vk::Buffer, vk::DeviceMemory>, 3> stagingChain;
+  int                                                             current = 0;
+  std::array<vk::CommandBuffer, CHAIN_SIZE>                       commandChain;
+  std::array<vk::Fence, CHAIN_SIZE>                               fenceChain;
+  std::array<std::pair<vk::Buffer, vk::DeviceMemory>, CHAIN_SIZE> stagingChain;
   for (auto& commandBuffer : commandChain) {
     commandBuffer = getTransferCommandBuffer(threadIndex);
   }
@@ -827,7 +828,7 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
   if (device) {
     triangles = &_trianglesDevice;
   } else {
-    triangles = &_trianglesDevice;
+    triangles = &_trianglesHost;
   }
   _renderContext.currentSwapChainImageIndex =
       _deviceContext.device
