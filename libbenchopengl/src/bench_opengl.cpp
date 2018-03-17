@@ -47,7 +47,7 @@ void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
     gl::glBufferData(static_cast<gl::GLenum>(GL_ARRAY_BUFFER),
                      triangle.size() * sizeof(triangle[0]),
                      triangle.data(),
-                     gl::GLenum::GL_STATIC_DRAW);
+                     static_cast<gl::GLenum>(GL_STATIC_DRAW));
 
     gl::glVertexAttribPointer(0,
                               3,
