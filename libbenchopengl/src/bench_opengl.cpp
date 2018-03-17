@@ -69,7 +69,18 @@ void BenchOpenGL::createTrianglesFast(ResultCollection& resultCollection) {
 }
 
 void BenchOpenGL::intermediateTriangleCleanUp() {
-  //
+
+	for (auto VAO : VAOArr)
+	{
+		gl::glDeleteVertexArrays(1, &VAO);
+		VAO = 0;
+	}
+	for (auto VBO : VBOArr)
+	{
+		gl::glDeleteBuffers(1, &VBO);
+		VBO = 0;
+	}
+
 }
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
