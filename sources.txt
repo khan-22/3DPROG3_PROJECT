@@ -1,0 +1,5 @@
+https://developer.nvidia.com/sites/default/files/akamai/gameworks/blog/munich/mschott_vulkan_multi_threading.pdf
+
+https://stackoverflow.com/questions/18217829/is-there-a-way-to-tell-whether-an-opengl-operation-is-finished
+
+https://www.khronos.org/opengl/wiki/GLAPI/glFenceSync
