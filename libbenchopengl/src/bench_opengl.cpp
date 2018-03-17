@@ -116,7 +116,9 @@ void BenchOpenGL::singleTriangleDraw(
 
 	for (int i = 0; i < shaderProgramArr.size(); ++i) {
 		gl::glUseProgram(shaderProgramArr.at(i));
-		gl::glDrawArrays(/**/, 0, 3);
+		for (int j = 0; j < static_cast<int>(3/3); ++j) {
+			gl::glDrawArrays(/**/, 0, 3);
+		}
 	}
 }
 
