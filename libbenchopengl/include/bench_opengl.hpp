@@ -12,7 +12,6 @@
 
 #include <string>
 
-
 class BenchOpenGL : public BenchTemplate {
  public:
   BenchOpenGL(int numberOfThreads, int N, int M);
@@ -50,5 +49,7 @@ class BenchOpenGL : public BenchTemplate {
  std::array<std::pair<std::string, std::string>, BENCHMARK_N> shaderPairArr; //Array containing all shader source files
  std::array<gl::GLuint, BENCHMARK_N> shaderProgramArr;
   
+ std::array<gl::GLuint, BENCHMARK_N> VBOArr;
+ std::array<gl::GLuint, BENCHMARK_N> VAOArr;
 };
 #endif  // BENCH_OPENGL_HPP

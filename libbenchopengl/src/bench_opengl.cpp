@@ -35,13 +35,29 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
 
   glbinding::Binding::initialize();
 
-
   createShaderModules(resultCollection);
   createPipelines(resultCollection);
+  createTrianglesHost(resultCollection);
 }
 
 void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
-  //
+
+	for (int i = 0; i < BENCHMARK_N; ++i)
+	{
+		gl::glGenVertexArrays(1, &VAOArr[i]);
+		gl::glBindVertexArray(VAOArr[i]);
+
+		std::array<Vertex, 3> triangle = getNextTriangle();
+		gl::glGenBuffers(1, &VBOArr[i]);
+		gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, VBOArr[i]);
+		gl::glBufferData(gl::GLenum::GL_ARRAY_BUFFER, triangle.size() * sizeof(triangle[0]), triangle.data(), gl::GLenum::GL_STATIC_DRAW);
+
+		gl::glVertexAttribPointer(0, 3, static_cast<gl::GLenum>(GL_FLOAT), GL_FALSE, sizeof(Vertex), (void*)0);
+		gl::glEnableVertexAttribArray(0);
+
+		gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, 0);
+		gl::glBindVertexArray(0);
+	}
 }
 
 void BenchOpenGL::createTrianglesSlow(ResultCollection& resultCollection) {
@@ -62,53 +78,49 @@ void BenchOpenGL::intermediateTriangleCleanUp() {
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
   auto sourcePairOriginal = loadShaderSource();
- 
 
-  for (auto &shaderPair : shaderPairArr)
-  {
-	  auto shaderPairCopy  = sourcePairOriginal;
-	  auto define		   = getNextDefine();
-	  shaderPairCopy.first = define + shaderPairCopy.first; //Add random defines (colors) to the top of the VS
-	  shaderPair		   = shaderPairCopy;
+  for (auto& shaderPair : shaderPairArr) {
+    auto shaderPairCopy = sourcePairOriginal;
+    auto define         = getNextDefine();
+    shaderPairCopy.first =
+        define +
+        shaderPairCopy
+            .first;  // Add random defines (colors) to the top of the VS
+    shaderPair = shaderPairCopy;
   }
-
 }
 
 void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
+  for (int i = 0; i < shaderProgramArr.size(); ++i) {
+    const char* src;
+    GLuint      VS, FS;
+    VS  = gl::glCreateShader(gl::GLenum::GL_VERTEX_SHADER);
+    src = shaderPairArr[i].first.c_str();
+    gl::glShaderSource(VS, 1, &src, NULL);
+    gl::glCompileShader(VS);
 
-	for (int i = 0; i < shaderProgramArr.size(); ++i)
-	{
-		const char *src;
-		GLuint VS, FS;
-		VS	= gl::glCreateShader(gl::GLenum::GL_VERTEX_SHADER);
-		src = shaderPairArr[i].first.c_str();
-		gl::glShaderSource(VS, 1, &src, NULL);
-		gl::glCompileShader(VS);
+    FS  = gl::glCreateShader(gl::GLenum::GL_FRAGMENT_SHADER);
+    src = shaderPairArr[i].second.c_str();
+    gl::glShaderSource(FS, 1, &src, NULL);
+    gl::glCompileShader(FS);
 
-		FS	= gl::glCreateShader(gl::GLenum::GL_FRAGMENT_SHADER);
-		src = shaderPairArr[i].second.c_str();
-		gl::glShaderSource(FS, 1, &src, NULL);
-		gl::glCompileShader(FS);
+    GLuint shaderProgram;
+    shaderProgram = gl::glCreateProgram();
+    gl::glAttachShader(shaderProgram, VS);
+    gl::glAttachShader(shaderProgram, FS);
+    gl::glLinkProgram(shaderProgram);
 
-		GLuint shaderProgram;
-		shaderProgram = gl::glCreateProgram();
-		gl::glAttachShader(shaderProgram, VS);
-		gl::glAttachShader(shaderProgram, FS);
-		gl::glLinkProgram(shaderProgram);
+    // Temporary
+    int success;
+    gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
+    if (!success) {
+      printf("\n\nERROR CREATING SHADER PROGRAM\n\n");
+    }
+    //
 
-		//Temporary
-		int  success;
-		gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
-		if (!success)
-		{
-			printf("\n\nERROR CREATING SHADER PROGRAM\n\n");
-		}
-		//
-
-		gl::glDeleteShader(VS);
-		gl::glDeleteShader(FS);
-	}
-
+    gl::glDeleteShader(VS);
+    gl::glDeleteShader(FS);
+  }
 }
 
 void BenchOpenGL::singleTriangleDraw(
