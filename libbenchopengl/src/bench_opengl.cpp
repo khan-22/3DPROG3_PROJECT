@@ -144,6 +144,8 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
     }
     //
 
+	shaderProgramArr[i] = shaderProgram;
+
     gl::glDetachShader(shaderProgram, VS);
     gl::glDetachShader(shaderProgram, FS);
 
