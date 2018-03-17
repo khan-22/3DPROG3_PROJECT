@@ -31,6 +31,9 @@ stats "../vk.c.createTrianglesSlow.8.txt" i 0 using 2 nooutput
 # set arrow 2 from 6, screen 0.6 to 6, screen 0.5 head size 5.0,2.0 front filled
 # set arrow 3 from 7, screen 0.6 to 7, screen 0.5 head size 5.0,2.0 front filled
 
+set object 1 rect from screen 0.5, screen 0.02 to screen 0.55, screen 0.05 fc rgb COLOR_G front
+set label 4 "Ignoring idle times" at screen 0.56, screen 0.03 font ",12" left
+
 set border 8
 LMARGIN=0.08
 XWIDTH=0.18
@@ -46,10 +49,10 @@ set rmargin at screen (LMARGIN+XWIDTH)
 set xrange[-1:4]
 set yrange[0:STATS_max]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.b.createTrianglesHost.1.txt" i 0 using (0):2 with boxplot lc rgb "#770111", \
-     "../vk.b.createTrianglesHost.2.txt" i 0 using (1):2 with boxplot lc rgb "#770111", \
-     "../vk.b.createTrianglesHost.4.txt" i 0 using (2):2 with boxplot lc rgb "#770111", \
-     "../vk.b.createTrianglesHost.8.txt" i 0 using (3):2 with boxplot lc rgb "#770111",
+plot "../vk.b.createTrianglesHost.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_V, \
+     "../vk.b.createTrianglesHost.2.txt" i 0 using (1):2 with boxplot lc rgb COLOR_V, \
+     "../vk.b.createTrianglesHost.4.txt" i 0 using (2):2 with boxplot lc rgb COLOR_V, \
+     "../vk.b.createTrianglesHost.8.txt" i 0 using (3):2 with boxplot lc rgb COLOR_V,
 
 unset label 2
 set title "\"Wasteful\"\n(Over-synchronization)"
@@ -59,10 +62,10 @@ set lmargin at screen (LMARGIN+XWIDTH)
 set rmargin at screen (LMARGIN+XWIDTH*2)
 set xrange[-1:4]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.c.createTrianglesSlow.1.txt" i 0 using (0):2 with boxplot lc rgb "#770111", \
-     "../vk.c.createTrianglesSlow.2.txt" i 0 using (1):2 with boxplot lc rgb "#770111", \
-     "../vk.c.createTrianglesSlow.4.txt" i 0 using (2):2 with boxplot lc rgb "#770111", \
-     "../vk.c.createTrianglesSlow.8.txt" i 0 using (3):2 with boxplot lc rgb "#770111",
+plot "../vk.c.createTrianglesSlow.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_V, \
+     "../vk.c.createTrianglesSlow.2.txt" i 0 using (1):2 with boxplot lc rgb COLOR_V, \
+     "../vk.c.createTrianglesSlow.4.txt" i 0 using (2):2 with boxplot lc rgb COLOR_V, \
+     "../vk.c.createTrianglesSlow.8.txt" i 0 using (3):2 with boxplot lc rgb COLOR_V,
 
 set title "\"Smart\"\n(Command daisy-chain)"
 unset ylabel
@@ -71,10 +74,15 @@ set lmargin at screen (LMARGIN+XWIDTH*2)
 set rmargin at screen (LMARGIN+XWIDTH*3)
 set xrange[-1:4]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.d.createTrianglesSmart.1.txt" i 0 using (0):2 with boxplot lc rgb "#770111", \
-     "../vk.d.createTrianglesSmart.2.txt" i 0 using (1):2 with boxplot lc rgb "#770111", \
-     "../vk.d.createTrianglesSmart.4.txt" i 0 using (2):2 with boxplot lc rgb "#770111", \
-     "../vk.d.createTrianglesSmart.8.txt" i 0 using (3):2 with boxplot lc rgb "#770111",
+plot "../vk.d.createTrianglesSmart.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_G, \
+     "../vk.d.createTrianglesSmart.2.txt" i 0 using (1):2 with boxplot lc rgb COLOR_G, \
+     "../vk.d.createTrianglesSmart.4.txt" i 0 using (2):2 with boxplot lc rgb COLOR_G, \
+     "../vk.d.createTrianglesSmart.8.txt" i 0 using (3):2 with boxplot lc rgb COLOR_G, \
+     "../vk.d.createTrianglesSmart.1.txt" i 0 using (0):3 with boxplot lc rgb COLOR_V, \
+     "../vk.d.createTrianglesSmart.2.txt" i 0 using (1):3 with boxplot lc rgb COLOR_V, \
+     "../vk.d.createTrianglesSmart.4.txt" i 0 using (2):3 with boxplot lc rgb COLOR_V, \
+     "../vk.d.createTrianglesSmart.8.txt" i 0 using (3):3 with boxplot lc rgb COLOR_V, 
+
 
 set title "\"Fast\"\n(Deferred submission)"
 unset ylabel
@@ -83,10 +91,14 @@ set lmargin at screen (LMARGIN+XWIDTH*3)
 set rmargin at screen (LMARGIN+XWIDTH*4)
 set xrange[-1:4]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.e.createTrianglesFast.1.txt" i 0 using (0):2 with boxplot lc rgb "#770111", \
-     "../vk.e.createTrianglesFast.2.txt" i 0 using (1):2 with boxplot lc rgb "#770111", \
-     "../vk.e.createTrianglesFast.4.txt" i 0 using (2):2 with boxplot lc rgb "#770111", \
-     "../vk.e.createTrianglesFast.8.txt" i 0 using (3):2 with boxplot lc rgb "#770111",
+plot "../vk.e.createTrianglesFast.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_G, \
+     "../vk.e.createTrianglesFast.2.txt" i 0 using (1):2 with boxplot lc rgb COLOR_G, \
+     "../vk.e.createTrianglesFast.4.txt" i 0 using (2):2 with boxplot lc rgb COLOR_G, \
+     "../vk.e.createTrianglesFast.8.txt" i 0 using (3):2 with boxplot lc rgb COLOR_G, \
+     "../vk.e.createTrianglesFast.1.txt" i 0 using (0):3 with boxplot lc rgb COLOR_V, \
+     "../vk.e.createTrianglesFast.2.txt" i 0 using (1):3 with boxplot lc rgb COLOR_V, \
+     "../vk.e.createTrianglesFast.4.txt" i 0 using (2):3 with boxplot lc rgb COLOR_V, \
+     "../vk.e.createTrianglesFast.8.txt" i 0 using (3):3 with boxplot lc rgb COLOR_V,
 
 unset border
 set label 2 "OpenGL" at graph 0.4, graph 0.9 font ",20" center
@@ -97,7 +109,7 @@ set lmargin at screen (LMARGIN+XWIDTH*4)
 set rmargin at screen (RMARGIN)
 set xrange[-2:2]
 set xtics("1 Thread" 0)
-plot "../ogl.b.createTrianglesHost.1.txt" i 0 using (0):2 with boxplot lc rgb "#014477", \
+plot "../ogl.b.createTrianglesHost.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
 
 
 

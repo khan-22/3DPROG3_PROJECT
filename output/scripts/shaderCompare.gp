@@ -46,10 +46,10 @@ set rmargin at screen (LMARGIN+XWIDTH)
 set xrange[-1:4]
 set yrange[0:STATS_max+0.1]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.f.createShaderModules.1.txt" i 0 using (0):3 with boxplot lc rgb "#770111", \
-     "../vk.f.createShaderModules.2.txt" i 0 using (1):3 with boxplot lc rgb "#770111", \
-     "../vk.f.createShaderModules.4.txt" i 0 using (2):3 with boxplot lc rgb "#770111", \
-     "../vk.f.createShaderModules.8.txt" i 0 using (3):3 with boxplot lc rgb "#770111",
+plot "../vk.f.createShaderModules.1.txt" i 0 using (0):3 with boxplot lc rgb COLOR_V, \
+     "../vk.f.createShaderModules.2.txt" i 0 using (1):3 with boxplot lc rgb COLOR_V, \
+     "../vk.f.createShaderModules.4.txt" i 0 using (2):3 with boxplot lc rgb COLOR_V, \
+     "../vk.f.createShaderModules.8.txt" i 0 using (3):3 with boxplot lc rgb COLOR_V,
 
 
 unset border
@@ -61,7 +61,7 @@ set lmargin at screen (LMARGIN+XWIDTH)
 set rmargin at screen (RMARGIN)
 set xrange[-2:2]
 set xtics("1 Thread" 0)
-plot "../ogl.f.createShaderModules.1.txt" i 0 using (0):2 with boxplot lc rgb "#014477", \
+plot "../ogl.f.createShaderModules.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
 
 
 
