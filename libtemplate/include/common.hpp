@@ -14,7 +14,7 @@ using Time     = std::chrono::high_resolution_clock::time_point;
 using TimeSpan = std::chrono::duration<double>;
 
 #define BENCHMARK_OUTER_RUNS 10
-#define BENCHMARK_N 40
+#define BENCHMARK_N 100
 #define BENCHMARK_M 2
 
 #endif  // COMMON_HPP

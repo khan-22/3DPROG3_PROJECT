@@ -32,7 +32,7 @@ struct Timer {
 //
 // Place to store all our results
 struct ResultCollection {
-  ResultCollection();
+  ResultCollection(std::string filename);
   ~ResultCollection();
 
   void addResult(Timer t);
@@ -40,8 +40,11 @@ struct ResultCollection {
   void averageWith(ResultCollection& resultCollection);
   void nextIteration();
 
+  std::string getFilename() const;
+
  private:
   std::vector<std::vector<Timer>> _results;
+  std::string                     _filename;
 
   int _averageWeight = 1;
 
