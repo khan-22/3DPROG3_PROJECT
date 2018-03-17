@@ -34,10 +34,6 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
   resultCollection.addResult(t);
 
   glbinding::Binding::initialize();
-
-  createShaderModules(resultCollection);
-  createPipelines(resultCollection);
-  createTrianglesHost(resultCollection);
 }
 
 void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
