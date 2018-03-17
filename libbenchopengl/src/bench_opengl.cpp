@@ -123,7 +123,7 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
     int success;
     gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
     if (!success) {
-      printf("\n\nERROR CREATING SHADER PROGRAM\n\n");
+      printf("\nERROR CREATING SHADER PROGRAM");
     }
     //
 
