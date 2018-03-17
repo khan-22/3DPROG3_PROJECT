@@ -43,50 +43,42 @@ void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
 
     std::array<Vertex, 3> triangle = getNextTriangle();
     gl::glGenBuffers(1, &VBOArr[i]);
-    gl::glBindBuffer(static_cast<gl::GLenum>(GL_ARRAY_BUFFER), VBOArr[i]);
-    gl::glBufferData(static_cast<gl::GLenum>(GL_ARRAY_BUFFER),
+    gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, VBOArr[i]);
+    gl::glBufferData(gl::GLenum::GL_ARRAY_BUFFER,
                      triangle.size() * sizeof(triangle[0]),
                      triangle.data(),
-                     static_cast<gl::GLenum>(GL_STATIC_DRAW));
+                     gl::GLenum::GL_STATIC_DRAW);
 
-    gl::glVertexAttribPointer(0,
-                              3,
-                              static_cast<gl::GLenum>(GL_FLOAT),
-                              GL_FALSE,
-                              sizeof(Vertex),
-                              (void*)0);
+    gl::glVertexAttribPointer(
+        0, 3, gl::GLenum::GL_FLOAT, false, sizeof(Vertex), (void*)0);
     gl::glEnableVertexAttribArray(0);
 
-    gl::glBindBuffer(static_cast<gl::GLenum>(GL_ARRAY_BUFFER), 0);
+    gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, 0);
     gl::glBindVertexArray(0);
   }
 }
 
 void BenchOpenGL::createTrianglesSlow(ResultCollection& resultCollection) {
-	createTrianglesHost(resultCollection);
+  createTrianglesHost(resultCollection);
 }
 
 void BenchOpenGL::createTrianglesSmart(ResultCollection& resultCollection) {
-	createTrianglesHost(resultCollection);
+  createTrianglesHost(resultCollection);
 }
 
 void BenchOpenGL::createTrianglesFast(ResultCollection& resultCollection) {
-	createTrianglesHost(resultCollection);
+  createTrianglesHost(resultCollection);
 }
 
 void BenchOpenGL::intermediateTriangleCleanUp() {
-
-	for (auto VAO : VAOArr)
-	{
-		gl::glDeleteVertexArrays(1, &VAO);
-		VAO = 0;
-	}
-	for (auto VBO : VBOArr)
-	{
-		gl::glDeleteBuffers(1, &VBO);
-		VBO = 0;
-	}
-
+  for (auto VAO : VAOArr) {
+    gl::glDeleteVertexArrays(1, &VAO);
+    VAO = 0;
+  }
+  for (auto VBO : VBOArr) {
+    gl::glDeleteBuffers(1, &VBO);
+    VBO = 0;
+  }
 }
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
@@ -106,18 +98,18 @@ void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
 void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
   for (int i = 0; i < shaderProgramArr.size(); ++i) {
     const char* src;
-    GLuint      VS, FS;
-    VS  = gl::glCreateShader(static_cast<gl::GLenum>(GL_VERTEX_SHADER));
+    gl::GLuint  VS, FS;
+    VS  = gl::glCreateShader(gl::GLenum::GL_VERTEX_SHADER);
     src = shaderPairArr[i].first.c_str();
     gl::glShaderSource(VS, 1, &src, NULL);
     gl::glCompileShader(VS);
 
-    FS  = gl::glCreateShader(static_cast<gl::GLenum>(GL_FRAGMENT_SHADER));
+    FS  = gl::glCreateShader(gl::GLenum::GL_FRAGMENT_SHADER);
     src = shaderPairArr[i].second.c_str();
     gl::glShaderSource(FS, 1, &src, NULL);
     gl::glCompileShader(FS);
 
-    GLuint shaderProgram;
+    gl::GLuint shaderProgram;
     shaderProgram = gl::glCreateProgram();
     gl::glAttachShader(shaderProgram, VS);
     gl::glAttachShader(shaderProgram, FS);
@@ -125,8 +117,7 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 
     // Temporary
     int success;
-    gl::glGetShaderiv(
-        shaderProgram, static_cast<gl::GLenum>(GL_LINK_STATUS), &success);
+    gl::glGetShaderiv(shaderProgram, gl::GLenum::GL_LINK_STATUS, &success);
     if (!success) {
       printf("\n\nERROR CREATING SHADER PROGRAM\n\n");
     }
@@ -137,38 +128,35 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
   }
 }
 
-void BenchOpenGL::singleTriangleDraw(
-	ResultCollection& resultCollection, bool device) {
-
-	for (int i = 0; i < shaderProgramArr.size(); ++i) {
-		gl::glUseProgram(shaderProgramArr.at(i));
-		gl::glBindVertexArray(VAOArr.at(0));
-		gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
-	}
+void BenchOpenGL::singleTriangleDraw(ResultCollection& resultCollection,
+                                     bool              device) {
+  for (int i = 0; i < shaderProgramArr.size(); ++i) {
+    gl::glUseProgram(shaderProgramArr.at(i));
+    gl::glBindVertexArray(VAOArr.at(0));
+    gl::glDrawArrays(gl::GLenum::GL_TRIANGLES, 0, 3);
+  }
 }
 
 void BenchOpenGL::optimalMultipleTriangleDraw(
     ResultCollection& resultCollection, bool device) {
-
-	for (int i = 0; i < shaderProgramArr.size(); ++i) {
-		gl::glUseProgram(shaderProgramArr.at(i));
-		for (int j = 0; j < BENCHMARK_M; ++j) {
-			gl::glBindVertexArray(VAOArr.at(j));
-			gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
-		}
-	}
+  for (int i = 0; i < shaderProgramArr.size(); ++i) {
+    gl::glUseProgram(shaderProgramArr.at(i));
+    for (int j = 0; j < BENCHMARK_M; ++j) {
+      gl::glBindVertexArray(VAOArr.at(j));
+      gl::glDrawArrays(gl::GLenum::GL_TRIANGLES, 0, 3);
+    }
+  }
 }
 
-void BenchOpenGL::badMultipleTriangleDraw(
-	ResultCollection& resultCollection, bool device) {
-	
-	for (int i = 0; i < BENCHMARK_M; ++i) {
-		for (int j = 0; j < shaderProgramArr.size(); ++j) {
-			gl::glUseProgram(shaderProgramArr.at(j));
-			gl::glBindVertexArray(VAOArr.at(j));
-			gl::glDrawArrays(static_cast<gl::GLenum>(GL_TRIANGLES), 0, 3);
-		}
-	}
+void BenchOpenGL::badMultipleTriangleDraw(ResultCollection& resultCollection,
+                                          bool              device) {
+  for (int i = 0; i < BENCHMARK_M; ++i) {
+    for (int j = 0; j < shaderProgramArr.size(); ++j) {
+      gl::glUseProgram(shaderProgramArr.at(j));
+      gl::glBindVertexArray(VAOArr.at(j));
+      gl::glDrawArrays(gl::GLenum::GL_TRIANGLES, 0, 3);
+    }
+  }
 }
 
 void BenchOpenGL::clean_up(ResultCollection& resultCollection) {

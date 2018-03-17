@@ -6,6 +6,7 @@
 #include <bench_template.hpp>
 #include <glbinding/Binding.h>
 #include <glbinding/gl/gl.h>
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <array>
 #include <utility>
@@ -45,11 +46,12 @@ class BenchOpenGL : public BenchTemplate {
 
  private:  // Functions
  private:  // Varibles
- GLFWwindow* _window = nullptr;
- std::array<std::pair<std::string, std::string>, BENCHMARK_N> shaderPairArr; //Array containing all shader source files
- std::array<gl::GLuint, BENCHMARK_N> shaderProgramArr;
-  
- std::array<gl::GLuint, BENCHMARK_N> VBOArr;	//vertex buffer object
- std::array<gl::GLuint, BENCHMARK_N> VAOArr;	//vertex array object
+  GLFWwindow* _window = nullptr;
+  std::array<std::pair<std::string, std::string>, BENCHMARK_N>
+                                      shaderPairArr;  // Array containing all shader source files
+  std::array<gl::GLuint, BENCHMARK_N> shaderProgramArr;
+
+  std::array<gl::GLuint, BENCHMARK_N> VBOArr;  // vertex buffer object
+  std::array<gl::GLuint, BENCHMARK_N> VAOArr;  // vertex array object
 };
 #endif  // BENCH_OPENGL_HPP
