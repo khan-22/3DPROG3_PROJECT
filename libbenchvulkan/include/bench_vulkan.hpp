@@ -96,6 +96,11 @@ class BenchVulkan : public BenchTemplate {
                                  int                                endIndex,
                                  int                                threadIndex,
                                  std::array<Triangle, BENCHMARK_N>* triangles);
+  void thread_singlePipelineDraw(int                                startIndex,
+                                 int                                endIndex,
+                                 int                                threadIndex,
+                                 std::array<Triangle, BENCHMARK_N>* triangles);
+
   void thread_optimalMultiTriangleDraw(
       int                                startIndex,
       int                                endIndex,
