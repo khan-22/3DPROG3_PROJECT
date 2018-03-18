@@ -119,9 +119,9 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType, int numberOfThreads) {
     TEST(createShaderModules);
     TEST(createPipelines);
 
-    TEST2(singleTriangleDraw, firstDrawTriangles, true);
-    TEST2(singleTriangleDraw, secondDrawTriangles, true);
-    TEST2(singleTriangleDraw, thirdDrawTriangles, true);
+    TEST2(singlePipelineDraw, firstDrawTriangles, true);
+    TEST2(singlePipelineDraw, secondDrawTriangles, true);
+    TEST2(singlePipelineDraw, thirdDrawTriangles, true);
 
     TEST2(singleTriangleDraw, firstDrawPipelines, true);
     TEST2(singleTriangleDraw, secondDrawPipelines, true);
