@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <thread>
+#include <mutex>
 
 #include <shaderc/shaderc.hpp>
 
@@ -161,14 +162,14 @@ void BenchVulkan::thread_createTrianglesSlow(int startIndex,
                                              int threadIndex) {
   const size_t size = 3 * sizeof(Vertex);
 
+  auto stagingBufferAndMemory =
+      getNewBuffer(size,
+                   vk::BufferUsageFlagBits::eTransferSrc,
+                   vk::MemoryPropertyFlagBits::eHostVisible |
+                       vk::MemoryPropertyFlagBits::eHostCoherent);
+
   for (int i = startIndex; i < endIndex; i++) {
     Triangle& triangle = _trianglesDevice[i];
-
-    auto stagingBufferAndMemory =
-        getNewBuffer(size,
-                     vk::BufferUsageFlagBits::eTransferSrc,
-                     vk::MemoryPropertyFlagBits::eHostVisible |
-                         vk::MemoryPropertyFlagBits::eHostCoherent);
 
     void* mappedMemory;
     CRITICAL(_deviceContext.device.mapMemory(stagingBufferAndMemory.second,
@@ -177,6 +178,7 @@ void BenchVulkan::thread_createTrianglesSlow(int startIndex,
                                              vk::MemoryMapFlagBits(0),
                                              &mappedMemory),
              "mapMemory");
+
     memcpy(mappedMemory, getNextTriangle().data(), size);
     _deviceContext.device.unmapMemory(stagingBufferAndMemory.second);
 
@@ -212,10 +214,9 @@ void BenchVulkan::thread_createTrianglesSlow(int startIndex,
 
     _deviceContext.device.freeCommandBuffers(
         _threadContexts[threadIndex].commandPool, commandBuffer);
-
-    _deviceContext.device.destroyBuffer(stagingBufferAndMemory.first);
-    _deviceContext.device.freeMemory(stagingBufferAndMemory.second);
   }
+  _deviceContext.device.destroyBuffer(stagingBufferAndMemory.first);
+  _deviceContext.device.freeMemory(stagingBufferAndMemory.second);
 }
 
 void BenchVulkan::createTrianglesSlow(ResultCollection& resultCollection) {
@@ -1160,6 +1161,8 @@ void BenchVulkan::clean_up(ResultCollection& resultCollection) {
   for (auto& triangle : _trianglesHost) {
     _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
     _deviceContext.device.freeMemory(triangle.memory, nullptr);
+    triangle.buffer = nullptr;
+    triangle.memory = nullptr;
   }
 
   _deviceContext.device.destroySemaphore(
@@ -1733,8 +1736,6 @@ uint32_t BenchVulkan::findMemoryType(uint32_t                typeFilter,
   return 0;
 }
 
-// std::mutex bufMutex;
-
 std::pair<vk::Buffer, vk::DeviceMemory> BenchVulkan::getNewBuffer(
     vk::DeviceSize          size,
     vk::BufferUsageFlags    usage,
@@ -1742,13 +1743,12 @@ std::pair<vk::Buffer, vk::DeviceMemory> BenchVulkan::getNewBuffer(
   //
   std::pair<vk::Buffer, vk::DeviceMemory> result;
 
-  // bufMutex.lock();
-
   vk::BufferCreateInfo bufferInfo;
   bufferInfo.size        = size;
   bufferInfo.usage       = usage;  // vk::BufferUsageFlagBits::eVertexBuffer;
   bufferInfo.sharingMode = vk::SharingMode::eExclusive;
 
+  _bufferMutex.lock();
   CRITICAL(
       _deviceContext.device.createBuffer(&bufferInfo, nullptr, &result.first),
       "createBuffer");
@@ -1760,11 +1760,18 @@ std::pair<vk::Buffer, vk::DeviceMemory> BenchVulkan::getNewBuffer(
   allocInfo.allocationSize  = memReq.size;
   allocInfo.memoryTypeIndex = findMemoryType(memReq.memoryTypeBits, properties);
 
-  CRITICAL(
-      _deviceContext.device.allocateMemory(&allocInfo, nullptr, &result.second),
-      "allocateMemory");
-  _deviceContext.device.bindBufferMemory(result.first, result.second, 0);
+  // CRITICAL(
+  //     _deviceContext.device.allocateMemory(&allocInfo, nullptr,
+  //     &result.second), "allocateMemory");
 
+  auto allocationResult =
+      _deviceContext.device.allocateMemory(&allocInfo, nullptr, &result.second);
+
+  if (allocationResult != vk::Result::eSuccess) {
+    std::cout << "FAIL FAIL FAIL FAIL Allocation result : " << std::endl;
+  }
+  _deviceContext.device.bindBufferMemory(result.first, result.second, 0);
+  _bufferMutex.unlock();
   // std::cout << "Thread " << std::this_thread::get_id()
   //           << " says Buffer is: " << result.first << std::endl;
 
@@ -1772,6 +1779,7 @@ std::pair<vk::Buffer, vk::DeviceMemory> BenchVulkan::getNewBuffer(
 }
 
 vk::CommandBuffer BenchVulkan::getTransferCommandBuffer(int threadIndex) {
+  std::lock_guard<std::mutex>   guard(_cmdBufferMutex);
   vk::CommandBufferAllocateInfo allocInfo;
   allocInfo.level              = vk::CommandBufferLevel::ePrimary;
   allocInfo.commandPool        = _threadContexts[threadIndex].commandPool;
@@ -1799,6 +1807,18 @@ void BenchVulkan::copyBufferOnce(vk::Buffer     srcBuffer,
                                  vk::Buffer     dstBuffer,
                                  vk::DeviceSize size) {
   // vk::CommandBuffer commandBuffer = getTransferCommandBuffer();
+}
+
+std::array<Vertex, 3> BenchVulkan::getNextTriangle() {
+  return {Vertex{(rand() % 512) / 256.f - 1.f,
+                 (rand() % 512) / 256.f - 1.f,
+                 (rand() % 512) / 256.f - 1.f},
+          Vertex{-((rand() % 512) / 256.f - 1.f),
+                 -((rand() % 512) / 256.f - 1.f),
+                 -((rand() % 512) / 256.f - 1.f)},
+          Vertex{(rand() % 512) / 512.f,
+                 (rand() % 512) / 512.f,
+                 (rand() % 512) / 512.f}};
 }
 
 //

@@ -204,7 +204,7 @@ void BenchOpenGL::badMultipleTriangleDraw(ResultCollection& resultCollection,
   for (int i = 0; i < BENCHMARK_M; ++i) {
     for (int j = 0; j < shaderProgramArr.size(); ++j) {
       gl::glUseProgram(shaderProgramArr.at(j));
-      gl::glBindVertexArray(VAOArr.at(j));
+      gl::glBindVertexArray(VAOArr.at(i));
       gl::glDrawArrays(gl::GLenum::GL_TRIANGLES, 0, 3);
     }
   }

@@ -11,6 +11,7 @@
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 #include <array>
+#include <mutex>
 
 #define USE_VALIDATION_LAYERS false
 
@@ -130,6 +131,9 @@ class BenchVulkan : public BenchTemplate {
                                            const char*                msg,
                                            void*                      userData);
 
+ protected:
+  virtual std::array<Vertex, 3> getNextTriangle() override;
+
  private:  // Variables
   enum QueueType { GRAPHICS, TRANSFER, PRESENT, NUM_QUEUES };
 
@@ -189,6 +193,10 @@ class BenchVulkan : public BenchTemplate {
 
   std::array<vk::Pipeline, BENCHMARK_N> _pipelines;
 
+  std::mutex _bufferMutex;
+  std::mutex _cmdBufferMutex;
+  std::mutex _drasticMutex;
+
   std::vector<const char*> _instanceExtensions = {
 #if USE_VALIDATION_LAYERS
     VK_EXT_DEBUG_REPORT_EXTENSION_NAME  // Remove when not in debug later
@@ -225,6 +233,7 @@ class BenchVulkan : public BenchTemplate {
   {                                                                \
     if (static_cast<vk::Result>((call)) != vk::Result::eSuccess) { \
       fprintf(stderr, "%s %s\n", "ERROR at ", msg);                \
+      std::cin.get();                                              \
       std::exit(EXIT_FAILURE);                                     \
     }                                                              \
   }

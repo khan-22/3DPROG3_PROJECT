@@ -99,6 +99,8 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType, int numberOfThreads) {
   };
 
   for (int i = 0; i < BENCHMARK_OUTER_RUNS; i++) {
+    std::cout << "Iteration (" << i + 1 << "/" << BENCHMARK_OUTER_RUNS << ")"
+              << std::endl;
     TEST(initialize);
     TEST(createTrianglesHost);
     benchmark->intermediateTriangleCleanUp();

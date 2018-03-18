@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include <array>
+#include <mutex>
 #include "result_collection.hpp"
 
 struct Vertex {
@@ -40,7 +41,7 @@ class BenchTemplate {
  protected:  // Functions
   std::pair<std::string, std::string> loadShaderSource();
   std::string                         getNextDefine();
-  std::array<Vertex, 3>               getNextTriangle();
+  virtual std::array<Vertex, 3>       getNextTriangle();
 
  protected:  // Variables
   const uint32_t    _WIDTH  = 800;
@@ -52,6 +53,7 @@ class BenchTemplate {
   int _M;
 
  private:
+  // std::mutex _triangleMutex;
 };
 
 #endif  // BENCH_TEMPLATE_HPP
