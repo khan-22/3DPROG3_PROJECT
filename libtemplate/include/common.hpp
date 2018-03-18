@@ -13,7 +13,7 @@ using namespace std::chrono;
 using Time     = std::chrono::high_resolution_clock::time_point;
 using TimeSpan = std::chrono::duration<double>;
 
-#define BENCHMARK_OUTER_RUNS 20
+#define BENCHMARK_OUTER_RUNS 5
 #define BENCHMARK_N 400
 #define BENCHMARK_M 400
 
