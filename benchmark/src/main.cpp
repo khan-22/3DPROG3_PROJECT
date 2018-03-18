@@ -71,9 +71,13 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType, int numberOfThreads) {
   ResultCollection createShaderModules(api + s() + "createShaderModules" + cf);
   ResultCollection createPipelines(api + s() + "createPipelines" + cf);
 
-  ResultCollection firstDraw(api + s() + "firstDraw" + cf);
-  ResultCollection secondDraw(api + s() + "secondDraw" + cf);
-  ResultCollection thirdDraw(api + s() + "thirdDraw" + cf);
+  ResultCollection firstDrawTriangles(api + s() + "firstDrawTriangles" + cf);
+  ResultCollection secondDrawTriangles(api + s() + "secondDrawTriangles" + cf);
+  ResultCollection thirdDrawTriangles(api + s() + "thirdDrawTriangles" + cf);
+
+  ResultCollection firstDrawPipelines(api + s() + "firstDrawPipelines" + cf);
+  ResultCollection secondDrawPipelines(api + s() + "secondDrawPipelines" + cf);
+  ResultCollection thirdDrawPipelines(api + s() + "thirdDrawPipelines" + cf);
 
   ResultCollection optimalMultipleTriangleDraw(
       api + s() + "optimalMultipleTriangleDraw" + cf);
@@ -90,9 +94,12 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType, int numberOfThreads) {
       &createTrianglesFast,
       &createShaderModules,
       &createPipelines,
-      &firstDraw,
-      &secondDraw,
-      &thirdDraw,
+      &firstDrawTriangles,
+      &secondDrawTriangles,
+      &thirdDrawTriangles,
+      &firstDrawPipelines,
+      &secondDrawPipelines,
+      &thirdDrawPipelines,
       &optimalMultipleTriangleDraw,
       &badMultipleTriangleDraw,
       &clean_up,
@@ -112,9 +119,13 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType, int numberOfThreads) {
     TEST(createShaderModules);
     TEST(createPipelines);
 
-    TEST2(singleTriangleDraw, firstDraw, true);
-    TEST2(singleTriangleDraw, secondDraw, true);
-    TEST2(singleTriangleDraw, thirdDraw, true);
+    TEST2(singleTriangleDraw, firstDrawTriangles, true);
+    TEST2(singleTriangleDraw, secondDrawTriangles, true);
+    TEST2(singleTriangleDraw, thirdDrawTriangles, true);
+
+    TEST2(singleTriangleDraw, firstDrawPipelines, true);
+    TEST2(singleTriangleDraw, secondDrawPipelines, true);
+    TEST2(singleTriangleDraw, thirdDrawPipelines, true);
 
     TEST(optimalMultipleTriangleDraw, true);
     TEST(badMultipleTriangleDraw, true);

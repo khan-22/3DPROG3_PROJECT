@@ -810,10 +810,10 @@ void BenchVulkan::thread_singleTriangleDraw(
   currentCommandBuffer.beginRenderPass(renderPassBeginInfo,
                                        vk::SubpassContents::eInline);
 
+  currentCommandBuffer.bindVertexBuffers(0, {(*triangles)[0].buffer}, {0});
   for (int i = startIndex; i < endIndex; i++) {
     currentCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
                                       _pipelines[i]);
-    currentCommandBuffer.bindVertexBuffers(0, {(*triangles)[i].buffer}, {0});
     currentCommandBuffer.draw(3, 1, 0, 0);
   }
   currentCommandBuffer.endRenderPass();
@@ -915,9 +915,9 @@ void BenchVulkan::thread_singlePipelineDraw(
   currentCommandBuffer.beginRenderPass(renderPassBeginInfo,
                                        vk::SubpassContents::eInline);
 
+  currentCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
+                                    _pipelines[0]);
   for (int i = startIndex; i < endIndex; i++) {
-    currentCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
-                                      _pipelines[i]);
     currentCommandBuffer.bindVertexBuffers(0, {(*triangles)[i].buffer}, {0});
     currentCommandBuffer.draw(3, 1, 0, 0);
   }
