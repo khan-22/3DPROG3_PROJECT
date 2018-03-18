@@ -27,6 +27,7 @@ void BenchOpenGL::initialize(ResultCollection& resultCollection) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwSwapInterval(0);
 
   _window = glfwCreateWindow(_WIDTH, _HEIGHT, _TITLE.c_str(), nullptr, nullptr);
   if (!_window) {
@@ -63,13 +64,7 @@ void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
     gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, 0);
     gl::glBindVertexArray(0);
   }
-  gl::GLsync fence = gl::glFenceSync(gl::GLenum::GL_SYNC_GPU_COMMANDS_COMPLETE,
-                                     gl::UnusedMask::GL_UNUSED_BIT);
-
-  gl::glClientWaitSync(fence,
-                       gl::SyncObjectMask::GL_NONE_BIT,
-                       std::numeric_limits<gl::GLuint64>::max());
-  gl::glDeleteSync(fence);
+  gl::glFinish();
 }
 
 void BenchOpenGL::createTrianglesSlow(ResultCollection& resultCollection) {
@@ -93,6 +88,7 @@ void BenchOpenGL::intermediateTriangleCleanUp() {
     gl::glDeleteBuffers(1, &VBO);
     VBO = 0;
   }
+  gl::glFinish();
 }
 
 void BenchOpenGL::createShaderModules(ResultCollection& resultCollection) {
@@ -217,4 +213,5 @@ void BenchOpenGL::badMultipleTriangleDraw(ResultCollection& resultCollection,
 void BenchOpenGL::clean_up(ResultCollection& resultCollection) {
   glfwDestroyWindow(_window);
   glfwTerminate();  //
+  gl::glFinish();
 }
