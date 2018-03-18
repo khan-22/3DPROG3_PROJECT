@@ -63,8 +63,13 @@ void BenchOpenGL::createTrianglesHost(ResultCollection& resultCollection) {
     gl::glBindBuffer(gl::GLenum::GL_ARRAY_BUFFER, 0);
     gl::glBindVertexArray(0);
   }
+  gl::GLsync fence = gl::glFenceSync(gl::GLenum::GL_SYNC_GPU_COMMANDS_COMPLETE,
+                                     gl::UnusedMask::GL_UNUSED_BIT);
 
-  gl::glFinish();
+  gl::glClientWaitSync(fence,
+                       gl::SyncObjectMask::GL_NONE_BIT,
+                       std::numeric_limits<gl::GLuint64>::max());
+  gl::glDeleteSync(fence);
 }
 
 void BenchOpenGL::createTrianglesSlow(ResultCollection& resultCollection) {

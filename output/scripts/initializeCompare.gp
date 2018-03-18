@@ -25,7 +25,7 @@ unset border
 set title "Average time spent initializing" font ",18"
 
 # stats "../vk.a.initialize.2.40.2.txt" using 6
-set ylabel "Time in seconds"
+set ylabel "Time in seconds" font ",16"
 
 set label 3 "Significant driver involvement" at 3, screen 0.64 font ",16"
 set arrow 1 from 3, screen 0.6 to 3, screen 0.5 head size 5.0,2.0 front filled

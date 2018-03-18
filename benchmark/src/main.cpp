@@ -75,6 +75,11 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType, int numberOfThreads) {
   ResultCollection secondDraw(api + s() + "secondDraw" + cf);
   ResultCollection thirdDraw(api + s() + "thirdDraw" + cf);
 
+  ResultCollection optimalMultipleTriangleDraw(
+      api + s() + "optimalMultipleTriangleDraw" + cf);
+  ResultCollection badMultipleTriangleDraw(api + s() +
+                                           "badMultipleTriangleDraw" + cf);
+
   ResultCollection clean_up(api + s() + "clean_up" + cf);
 
   ResultCollection* collections[] = {
@@ -88,6 +93,8 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType, int numberOfThreads) {
       &firstDraw,
       &secondDraw,
       &thirdDraw,
+      &optimalMultipleTriangleDraw,
+      &badMultipleTriangleDraw,
       &clean_up,
   };
 
@@ -106,6 +113,9 @@ void runBenchmark(BENCHMARK_TYPE benchmarkType, int numberOfThreads) {
     TEST2(singleTriangleDraw, firstDraw, true);
     TEST2(singleTriangleDraw, secondDraw, true);
     TEST2(singleTriangleDraw, thirdDraw, true);
+
+    TEST(optimalMultipleTriangleDraw, true);
+    TEST(badMultipleTriangleDraw, true);
 
     TEST(clean_up);
   }
