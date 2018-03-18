@@ -167,10 +167,10 @@ void BenchOpenGL::createPipelines(ResultCollection& resultCollection) {
 void BenchOpenGL::singleTriangleDraw(ResultCollection& resultCollection,
                                      bool              device) {
   gl::glClear(gl::ClearBufferMask::GL_COLOR_BUFFER_BIT);
+  gl::glBindVertexArray(VAOArr.at(0));
 
   for (int i = 0; i < shaderProgramArr.size(); ++i) {
     gl::glUseProgram(shaderProgramArr.at(i));
-    gl::glBindVertexArray(VAOArr.at(i));
     gl::glDrawArrays(gl::GLenum::GL_TRIANGLES, 0, 3);
   }
 
@@ -180,6 +180,17 @@ void BenchOpenGL::singleTriangleDraw(ResultCollection& resultCollection,
 
 void BenchOpenGL::singlePipelineDraw(ResultCollection& resultCollection,
                                      bool              device) {
+
+	gl::glClear(gl::ClearBufferMask::GL_COLOR_BUFFER_BIT);
+	gl::glUseProgram(shaderProgramArr.at(0));
+
+	for (int i = 0; i < VAOArr.size(); ++i) {
+		gl::glBindVertexArray(VAOArr.at(i));
+		gl::glDrawArrays(gl::GLenum::GL_TRIANGLES, 0, 3);
+	}
+
+	glfwSwapBuffers(_window);
+	gl::glFinish();
 }
 
 void BenchOpenGL::optimalMultipleTriangleDraw(
