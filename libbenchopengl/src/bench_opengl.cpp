@@ -178,6 +178,10 @@ void BenchOpenGL::singleTriangleDraw(ResultCollection& resultCollection,
   gl::glFinish();
 }
 
+void BenchOpenGL::singlePipelineDraw(ResultCollection& resultCollection,
+                                     bool              device) {
+}
+
 void BenchOpenGL::optimalMultipleTriangleDraw(
     ResultCollection& resultCollection, bool device) {
   gl::glClear(gl::ClearBufferMask::GL_COLOR_BUFFER_BIT);

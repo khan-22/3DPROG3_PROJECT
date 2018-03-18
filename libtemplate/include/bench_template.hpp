@@ -31,6 +31,8 @@ class BenchTemplate {
 
   virtual void singleTriangleDraw(ResultCollection& resultCollection,
                                   bool              device)          = 0;
+  virtual void singlePipelineDraw(ResultCollection& resultCollection,
+                                  bool              device)          = 0;
   virtual void optimalMultipleTriangleDraw(ResultCollection& resultCollection,
                                            bool              device) = 0;
   virtual void badMultipleTriangleDraw(ResultCollection& resultCollection,

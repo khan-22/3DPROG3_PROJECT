@@ -37,6 +37,9 @@ class BenchOpenGL : public BenchTemplate {
 
   virtual void singleTriangleDraw(ResultCollection& resultCollection,
                                   bool              device) final override;
+  virtual void singlePipelineDraw(ResultCollection& resultCollection,
+                                  bool              device) final override;
+
   virtual void optimalMultipleTriangleDraw(ResultCollection& resultCollection,
                                            bool device) final override;
   virtual void badMultipleTriangleDraw(ResultCollection& resultCollection,

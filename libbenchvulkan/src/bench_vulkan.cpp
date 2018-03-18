@@ -879,6 +879,111 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
   resultCollection.addResult(t);
 }
 
+void BenchVulkan::thread_singlePipelineDraw(
+    int                                startIndex,
+    int                                endIndex,
+    int                                threadIndex,
+    std::array<Triangle, BENCHMARK_N>* triangles) {
+  ThreadContext& threadContext = _threadContexts[threadIndex];
+
+  uint32_t currentIndex = _renderContext.currentSwapChainImageIndex;
+
+  vk::CommandBuffer& currentCommandBuffer =
+      threadContext.commandBuffers[currentIndex];
+
+  vk::CommandBufferBeginInfo beginInfo;
+  beginInfo.flags            = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+  beginInfo.pInheritanceInfo = nullptr;
+
+  vk::ClearValue clearColor;
+  clearColor.color.float32[0] = 0.6f;
+  clearColor.color.float32[1] = 0.0f;
+  clearColor.color.float32[2] = 0.3f;
+  clearColor.color.float32[3] = 1.0f;
+
+  vk::RenderPassBeginInfo renderPassBeginInfo;
+  renderPassBeginInfo.renderPass = _renderContext.renderPass;
+  renderPassBeginInfo.framebuffer =
+      _swapchainContext.framebuffers[currentIndex];
+  renderPassBeginInfo.renderArea.offset.x = 0;
+  renderPassBeginInfo.renderArea.offset.y = 0;
+  renderPassBeginInfo.renderArea.extent   = _swapchainContext.extent;
+  renderPassBeginInfo.clearValueCount     = 1;
+  renderPassBeginInfo.pClearValues        = &clearColor;
+
+  currentCommandBuffer.begin(beginInfo);
+  currentCommandBuffer.beginRenderPass(renderPassBeginInfo,
+                                       vk::SubpassContents::eInline);
+
+  for (int i = startIndex; i < endIndex; i++) {
+    currentCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
+                                      _pipelines[i]);
+    currentCommandBuffer.bindVertexBuffers(0, {(*triangles)[i].buffer}, {0});
+    currentCommandBuffer.draw(3, 1, 0, 0);
+  }
+  currentCommandBuffer.endRenderPass();
+  currentCommandBuffer.end();
+}
+
+void BenchVulkan::singlePipelineDraw(ResultCollection& resultCollection,
+                                     bool              device) {
+  Timer t;
+  t.start("Construction");
+
+  std::array<Triangle, BENCHMARK_N>* triangles;
+  if (device) {
+    triangles = &_trianglesDevice;
+  } else {
+    triangles = &_trianglesHost;
+  }
+  _renderContext.currentSwapChainImageIndex =
+      _deviceContext.device
+          .acquireNextImageKHR(_swapchainContext.swapchain,
+                               (std::numeric_limits<uint64_t>::max)(),
+                               _renderContext.imageAvailableSemaphore,
+                               nullptr)
+          .value;
+
+  const int DRAWS_PER_THREAD = _pipelines.size() / _numberOfThreads;
+  int       startIndex       = 0;
+  int       endIndex         = DRAWS_PER_THREAD;
+
+  std::vector<std::thread> threads;
+  threads.reserve(_numberOfThreads - 1);
+  for (int i = 0; i < _numberOfThreads - 1; i++) {
+    threads.emplace_back(&BenchVulkan::thread_singlePipelineDraw,
+                         this,
+                         startIndex,
+                         endIndex,
+                         i,
+                         triangles);
+
+    startIndex += DRAWS_PER_THREAD;
+    endIndex += DRAWS_PER_THREAD;
+  }
+
+  thread_singlePipelineDraw(
+      startIndex, triangles->size(), _numberOfThreads - 1, triangles);
+
+  for (auto& thread : threads) {
+    thread.join();
+  }
+
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Submission");
+  // Rendering
+  drawSubmission();
+  t.stop();
+  resultCollection.addResult(t);
+
+  t.start("Waiting");
+  _threadContexts[_numberOfThreads - 1].queue.waitIdle();
+  t.stop();
+  resultCollection.addResult(t);
+}
+
 void BenchVulkan::thread_optimalMultiTriangleDraw(
     int                                startIndex,
     int                                endIndex,
