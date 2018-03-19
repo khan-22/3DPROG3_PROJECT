@@ -7,7 +7,7 @@ set xtics nomirror
 
 set key autotitle columnheader
 set key off
-set yrange[0:0.30]
+set yrange[0:0.15]
 set grid y
 set xtics rotate by -45
 set style fill solid 0.7

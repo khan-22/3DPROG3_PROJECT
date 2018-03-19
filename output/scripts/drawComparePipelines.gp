@@ -49,7 +49,7 @@ set ylabel "Time in seconds" offset 2.5 font ",16"
 set lmargin at screen (LMARGIN)
 set rmargin at screen (LMARGIN+XWIDTH)
 set xrange[-1:4]
-set yrange[0:2.0]
+set yrange[0:0.02]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
 plot "../vk.k.firstDrawPipelines.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
      "../vk.k.firstDrawPipelines.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \

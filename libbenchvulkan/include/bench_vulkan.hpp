@@ -12,6 +12,7 @@
 #include <GLFW/glfw3.h>
 #include <array>
 #include <mutex>
+#include <thread>
 
 #define USE_VALIDATION_LAYERS false
 
@@ -25,6 +26,8 @@ class BenchVulkan : public BenchTemplate {
  public:
   BenchVulkan(int numberOfThreads, int N, int M);
   virtual ~BenchVulkan();
+
+  virtual void startupThreads() override;
 
   virtual void initialize(ResultCollection& resultCollection) final override;
 
@@ -69,6 +72,31 @@ class BenchVulkan : public BenchTemplate {
   void makePipelineLayout();
   void makeSemaphores();
 
+  void launchThreads(int dataSetSize, bool device = true);
+
+  void waitForThreads();
+
+  enum THREAD_TASK {
+    TRI_HOST,
+    TRI_SLOW,
+    TRI_SMART,
+    TRI_FAST,
+    SHADERS,
+    PIPELINES,
+    SINGLE_TRI,
+    SINGLE_PIPE,
+    OPTIMAL,
+    BAD,
+    IDLE,
+    QUIT,
+  };
+  void setThreadTask(THREAD_TASK task, bool device = true);
+
+  void thread_idle(int  startIndex,
+                   int  endIndex,
+                   int  threadIndex,
+                   bool device = true);
+
   void thread_createTrianglesHost(int startIndex,
                                   int endIndex,
                                   int threadIndex);
@@ -84,11 +112,9 @@ class BenchVulkan : public BenchTemplate {
                                   int    threadIndex,
                                   Timer* timer);
 
-  void thread_createShaderModules(
-      int                                        startIndex,
-      int                                        endIndex,
-      int                                        threadIndex,
-      const std::pair<std::string, std::string>& sourcePair);
+  void thread_createShaderModules(int startIndex,
+                                  int endIndex,
+                                  int threadIndex);
 
   void thread_createPipelines(int startIndex, int endIndex, int threadIndex);
 
@@ -188,6 +214,10 @@ class BenchVulkan : public BenchTemplate {
     uint32_t       currentSwapChainImageIndex;
   } _renderContext;
 
+  volatile THREAD_TASK _threadSignals[8] = {IDLE};
+  // std::mutex               _threadWorkMutexes[8];
+  // std::mutex               _threadIdleMutexes[8];
+  std::vector<std::thread> _threads;
   // std::unordered_map<int, vk::DescriptorSetLayout> _descriptorSetLayouts;
   // std::unordered_map<int, int> _descriptorLocationToIndexMap;
 
@@ -206,6 +236,8 @@ class BenchVulkan : public BenchTemplate {
   std::mutex _bufferMutex;
   std::mutex _cmdBufferMutex;
   std::mutex _drasticMutex;
+
+  std::pair<std::string, std::string> sourcePair;
 
   std::vector<const char*> _instanceExtensions = {
 #if USE_VALIDATION_LAYERS

@@ -47,7 +47,7 @@ set ylabel "Time in seconds" offset 2.5 font ",16"
 set lmargin at screen (LMARGIN)
 set rmargin at screen (LMARGIN+XWIDTH)
 set xrange[-1:4]
-set yrange[0:STATS_max]
+set yrange[0:STATS_max*1.3]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
 plot "../vk.b.createTrianglesHost.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_V, \
      "../vk.b.createTrianglesHost.2.txt" i 0 using (1):2 with boxplot lc rgb COLOR_V, \
@@ -74,14 +74,14 @@ set lmargin at screen (LMARGIN+XWIDTH*2)
 set rmargin at screen (LMARGIN+XWIDTH*3)
 set xrange[-1:4]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.d.createTrianglesSmart.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_G, \
-     "../vk.d.createTrianglesSmart.2.txt" i 0 using (1):2 with boxplot lc rgb COLOR_G, \
-     "../vk.d.createTrianglesSmart.4.txt" i 0 using (2):2 with boxplot lc rgb COLOR_G, \
-     "../vk.d.createTrianglesSmart.8.txt" i 0 using (3):2 with boxplot lc rgb COLOR_G, \
-     "../vk.d.createTrianglesSmart.1.txt" i 0 using (0):3 with boxplot lc rgb COLOR_V, \
-     "../vk.d.createTrianglesSmart.2.txt" i 0 using (1):3 with boxplot lc rgb COLOR_V, \
-     "../vk.d.createTrianglesSmart.4.txt" i 0 using (2):3 with boxplot lc rgb COLOR_V, \
-     "../vk.d.createTrianglesSmart.8.txt" i 0 using (3):3 with boxplot lc rgb COLOR_V, 
+plot "../vk.d.createTrianglesSmart.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_V, \
+     "../vk.d.createTrianglesSmart.2.txt" i 0 using (1):2 with boxplot lc rgb COLOR_V, \
+     "../vk.d.createTrianglesSmart.4.txt" i 0 using (2):2 with boxplot lc rgb COLOR_V, \
+     "../vk.d.createTrianglesSmart.8.txt" i 0 using (3):2 with boxplot lc rgb COLOR_V, #\
+    #  "../vk.d.createTrianglesSmart.1.txt" i 0 using (0):3 with boxplot lc rgb COLOR_V, \
+    #  "../vk.d.createTrianglesSmart.2.txt" i 0 using (1):3 with boxplot lc rgb COLOR_V, \
+    #  "../vk.d.createTrianglesSmart.4.txt" i 0 using (2):3 with boxplot lc rgb COLOR_V, \
+    #  "../vk.d.createTrianglesSmart.8.txt" i 0 using (3):3 with boxplot lc rgb COLOR_V, 
 
 
 set title "\"Fast\"\n(Deferred submission)"

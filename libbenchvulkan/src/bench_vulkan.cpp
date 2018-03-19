@@ -20,6 +20,10 @@ BenchVulkan::~BenchVulkan() {
   std::cout << "Finished Vulkan Benchmark" << std::endl;
 }
 
+void BenchVulkan::startupThreads() {
+  launchThreads(BENCHMARK_N);
+}
+
 void BenchVulkan::initialize(ResultCollection& resultCollection) {
   srand(0);
 
@@ -104,6 +108,157 @@ void BenchVulkan::initialize(ResultCollection& resultCollection) {
   resultCollection.addResult(t);
 }
 
+void BenchVulkan::launchThreads(int dataSetSize, bool device) {
+  const int ACTIONS_PER_THREAD = BENCHMARK_N / _numberOfThreads;
+  int       startIndex         = 0;
+  int       endIndex           = ACTIONS_PER_THREAD;
+  for (int i = 0; i < _numberOfThreads; i++) {
+    _threadSignals[i] = THREAD_TASK::IDLE;
+  }
+
+  _threads.reserve(_numberOfThreads - 1);
+  for (int i = 0; i < _numberOfThreads - 1; i++) {
+    // _threadWorkMutexes[i].lock();
+    // _threadIdleMutexes[i].unlock();
+    // std::cout << i << " LAUNCHED A THREAD\n";
+    _threads.emplace_back(
+        &BenchVulkan::thread_idle, this, startIndex, endIndex, i, device);
+
+    startIndex += ACTIONS_PER_THREAD;
+    endIndex += ACTIONS_PER_THREAD;
+  }
+  // std::cout << "Launched " << _numberOfThreads - 1 << " threads" <<
+  // std::endl;
+}
+
+void BenchVulkan::setThreadTask(THREAD_TASK task, bool device) {
+  for (int i = 0; i < _numberOfThreads; i++) {
+    _threadSignals[i] = task;
+
+    // if (i != _numberOfThreads - 1) {
+    //   _threadIdleMutexes[i].lock();
+    //   _threadWorkMutexes[i].unlock();
+    // }
+    // std::cout << "CHANGING STATE " << i << ": " << _threadSignals[i]
+    //           << std::endl;
+  }
+  const int ACTIONS_PER_THREAD = BENCHMARK_N / _numberOfThreads;
+  int       startIndex         = ACTIONS_PER_THREAD * (_numberOfThreads - 1);
+  thread_idle(startIndex, BENCHMARK_N, _numberOfThreads - 1, device);
+
+  // std::cout << "Starting wait!" << std::endl;
+  // if (_numberOfThreads > 1) {
+  waitForThreads();
+  // }
+}
+
+void BenchVulkan::waitForThreads() {
+  // for (int i = 0; i < _numberOfThreads - 1; i++) {
+  //   // std::cout << "MAIN: I'm waiting for work mutex " << i << std::endl;
+  //   // _threadWorkMutexes[i].lock();
+  //   // std::cout << "MAIN: I'm waiting for idle mutex " << i << std::endl;
+  //   // _threadIdleMutexes[i].unlock();
+  // }
+  // std::cout << "Actual number of threads: " << _threads.size() << std::endl;
+  bool finished = true;
+  do {
+    // std::cout << "I'm waiting" << std::endl;
+    finished = true;
+    for (int i = 0; i < _numberOfThreads; i++) {
+      if (_threadSignals[i] != THREAD_TASK::IDLE) {
+        // std::cout << "TASK #" << i << " " << _threadSignals[i] << std::endl;
+        finished = false;
+        break;
+      }
+    }
+  } while (!finished);
+}
+
+void BenchVulkan::thread_idle(int  startIndex,
+                              int  endIndex,
+                              int  threadIndex,
+                              bool device) {
+  volatile THREAD_TASK& task = _threadSignals[threadIndex];
+  while (task != THREAD_TASK::QUIT) {
+    while (task == THREAD_TASK::IDLE) {
+      // Idle
+      std::this_thread::sleep_for(1ms);
+    }
+    if (task != THREAD_TASK::QUIT) {
+      switch (task) {
+        case TRI_HOST: {
+          thread_createTrianglesHost(startIndex, endIndex, threadIndex);
+          break;
+        }
+        case TRI_SLOW: {
+          thread_createTrianglesSlow(startIndex, endIndex, threadIndex);
+          break;
+        }
+        case TRI_SMART: {
+          thread_createTrianglesSmart(
+              startIndex, endIndex, threadIndex, nullptr);
+          break;
+        }
+        case TRI_FAST: {
+          thread_createTrianglesFast(
+              startIndex, endIndex, threadIndex, nullptr);
+          break;
+        }
+        case SHADERS: {
+          thread_createShaderModules(startIndex, endIndex, threadIndex);
+          break;
+        }
+        case PIPELINES: {
+          thread_createPipelines(startIndex, endIndex, threadIndex);
+          break;
+        }
+        case SINGLE_TRI: {
+          thread_singleTriangleDraw(
+              startIndex,
+              endIndex,
+              threadIndex,
+              device ? &_trianglesDevice : &_trianglesHost);
+          break;
+        }
+        case SINGLE_PIPE: {
+          thread_singlePipelineDraw(
+              startIndex,
+              endIndex,
+              threadIndex,
+              device ? &_trianglesDevice : &_trianglesHost);
+          break;
+        }
+        case OPTIMAL: {
+          thread_optimalMultiTriangleDraw(
+              startIndex,
+              endIndex,
+              threadIndex,
+              device ? &_trianglesDevice : &_trianglesHost);
+          break;
+        }
+        case BAD: {
+          thread_badMultipleTriangleDraw(
+              startIndex,
+              endIndex,
+              threadIndex,
+              device ? &_trianglesDevice : &_trianglesHost);
+          break;
+        }
+        default: { std::cout << "I DIDN'T KNOW WHAT TO DO" << std::endl; }
+      }
+
+      task = THREAD_TASK::IDLE;
+
+      if (threadIndex == _numberOfThreads - 1) {
+        return;
+      }
+    } else {
+      return;
+    }
+  }
+  return;
+}
+
 void BenchVulkan::thread_createTrianglesHost(int startIndex,
                                              int endIndex,
                                              int threadIndex) {
@@ -132,29 +287,7 @@ void BenchVulkan::thread_createTrianglesHost(int startIndex,
 }
 
 void BenchVulkan::createTrianglesHost(ResultCollection& resultCollection) {
-  const int TRI_PER_THREAD = _trianglesHost.size() / _numberOfThreads;
-  int       startIndex     = 0;
-  int       endIndex       = TRI_PER_THREAD;
-
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(&BenchVulkan::thread_createTrianglesHost,
-                         this,
-                         startIndex,
-                         endIndex,
-                         i);
-
-    startIndex += TRI_PER_THREAD;
-    endIndex += TRI_PER_THREAD;
-  }
-
-  thread_createTrianglesHost(
-      startIndex, _trianglesHost.size(), _numberOfThreads);
-
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  setThreadTask(THREAD_TASK::TRI_HOST);
 }
 
 void BenchVulkan::thread_createTrianglesSlow(int startIndex,
@@ -220,29 +353,7 @@ void BenchVulkan::thread_createTrianglesSlow(int startIndex,
 }
 
 void BenchVulkan::createTrianglesSlow(ResultCollection& resultCollection) {
-  const int TRI_PER_THREAD = _trianglesDevice.size() / _numberOfThreads;
-  int       startIndex     = 0;
-  int       endIndex       = TRI_PER_THREAD;
-
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(&BenchVulkan::thread_createTrianglesSlow,
-                         this,
-                         startIndex,
-                         endIndex,
-                         i);
-
-    startIndex += TRI_PER_THREAD;
-    endIndex += TRI_PER_THREAD;
-  }
-
-  thread_createTrianglesSlow(
-      startIndex, _trianglesDevice.size(), _numberOfThreads - 1);
-
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  setThreadTask(THREAD_TASK::TRI_SLOW);
 }
 
 void BenchVulkan::thread_createTrianglesSmart(int    startIndex,
@@ -357,33 +468,16 @@ void BenchVulkan::thread_createTrianglesSmart(int    startIndex,
 }
 
 void BenchVulkan::createTrianglesSmart(ResultCollection& resultCollection) {
-  const int TRI_PER_THREAD = _trianglesDevice.size() / _numberOfThreads;
-  int       startIndex     = 0;
-  int       endIndex       = TRI_PER_THREAD;
+  setThreadTask(THREAD_TASK::TRI_SLOW);
+  // Timer t;
+  // t.start("Work");
+  // thread_createTrianglesSmart(
+  //     startIndex, _trianglesDevice.size(), _numberOfThreads - 1, &t);
+  // resultCollection.addResult(t);
 
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(&BenchVulkan::thread_createTrianglesSmart,
-                         this,
-                         startIndex,
-                         endIndex,
-                         i,
-                         nullptr);
-
-    startIndex += TRI_PER_THREAD;
-    endIndex += TRI_PER_THREAD;
-  }
-
-  Timer t;
-  t.start("Work");
-  thread_createTrianglesSmart(
-      startIndex, _trianglesDevice.size(), _numberOfThreads - 1, &t);
-  resultCollection.addResult(t);
-
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  // for (auto& thread : threads) {
+  //   thread.join();
+  // }
 }
 
 void BenchVulkan::thread_createTrianglesFast(int    startIndex,
@@ -446,32 +540,16 @@ void BenchVulkan::thread_createTrianglesFast(int    startIndex,
 }
 
 void BenchVulkan::createTrianglesFast(ResultCollection& resultCollection) {
-  const int TRI_PER_THREAD = _trianglesDevice.size() / _numberOfThreads;
-  int       startIndex     = 0;
-  int       endIndex       = TRI_PER_THREAD;
-
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(&BenchVulkan::thread_createTrianglesFast,
-                         this,
-                         startIndex,
-                         endIndex,
-                         i,
-                         nullptr);
-
-    startIndex += TRI_PER_THREAD;
-    endIndex += TRI_PER_THREAD;
-  }
-
   Timer t;
   t.start("Work");
-  thread_createTrianglesFast(
-      startIndex, _trianglesDevice.size(), _numberOfThreads - 1, &t);
+  setThreadTask(THREAD_TASK::TRI_FAST);
 
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  // thread_createTrianglesFast(
+  //     startIndex, _trianglesDevice.size(), _numberOfThreads - 1, &t);
+
+  // for (auto& thread : threads) {
+  //   thread.join();
+  // }
 
   std::vector<vk::CommandBuffer> commandBuffers;
   for (auto& tc : _threadContexts) {
@@ -507,11 +585,9 @@ void BenchVulkan::intermediateTriangleCleanUp() {
   }
 }
 
-void BenchVulkan::thread_createShaderModules(
-    int                                        startIndex,
-    int                                        endIndex,
-    int                                        threadIndex,
-    const std::pair<std::string, std::string>& sourcePair) {
+void BenchVulkan::thread_createShaderModules(int startIndex,
+                                             int endIndex,
+                                             int threadIndex) {
   shaderc::Compiler       compiler;
   shaderc::CompileOptions options;
 
@@ -604,34 +680,11 @@ void BenchVulkan::thread_createShaderModules(
 void BenchVulkan::createShaderModules(ResultCollection& resultCollection) {
   Timer t;
   t.start("Loading");
-  auto sourcePair = loadShaderSource();
+  sourcePair = loadShaderSource();
   t.stop();
   resultCollection.addResult(t);
 
-  const int SHADER_PER_THREAD = _shaderModules.size() / _numberOfThreads;
-  int       startIndex        = 0;
-  int       endIndex          = SHADER_PER_THREAD;
-
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(&BenchVulkan::thread_createShaderModules,
-                         this,
-                         startIndex,
-                         endIndex,
-                         i,
-                         sourcePair);
-
-    startIndex += SHADER_PER_THREAD;
-    endIndex += SHADER_PER_THREAD;
-  }
-
-  thread_createShaderModules(
-      startIndex, _shaderModules.size(), _numberOfThreads - 1, sourcePair);
-
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  setThreadTask(THREAD_TASK::SHADERS);
 }
 
 void BenchVulkan::thread_createPipelines(int startIndex,
@@ -755,25 +808,7 @@ void BenchVulkan::thread_createPipelines(int startIndex,
 }
 
 void BenchVulkan::createPipelines(ResultCollection& resultCollection) {
-  const int PIPES_PER_THREAD = _pipelines.size() / _numberOfThreads;
-  int       startIndex       = 0;
-  int       endIndex         = PIPES_PER_THREAD;
-
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(
-        &BenchVulkan::thread_createPipelines, this, startIndex, endIndex, i);
-
-    startIndex += PIPES_PER_THREAD;
-    endIndex += PIPES_PER_THREAD;
-  }
-
-  thread_createPipelines(startIndex, _pipelines.size(), _numberOfThreads - 1);
-
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  setThreadTask(THREAD_TASK::PIPELINES);
 }
 
 void BenchVulkan::thread_singleTriangleDraw(
@@ -827,12 +862,6 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
   Timer t;
   t.start("Construction");
 
-  std::array<Triangle, BENCHMARK_N>* triangles;
-  if (device) {
-    triangles = &_trianglesDevice;
-  } else {
-    triangles = &_trianglesHost;
-  }
   _renderContext.currentSwapChainImageIndex =
       _deviceContext.device
           .acquireNextImageKHR(_swapchainContext.swapchain,
@@ -841,30 +870,7 @@ void BenchVulkan::singleTriangleDraw(ResultCollection& resultCollection,
                                nullptr)
           .value;
 
-  const int DRAWS_PER_THREAD = _pipelines.size() / _numberOfThreads;
-  int       startIndex       = 0;
-  int       endIndex         = DRAWS_PER_THREAD;
-
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(&BenchVulkan::thread_singleTriangleDraw,
-                         this,
-                         startIndex,
-                         endIndex,
-                         i,
-                         triangles);
-
-    startIndex += DRAWS_PER_THREAD;
-    endIndex += DRAWS_PER_THREAD;
-  }
-
-  thread_singleTriangleDraw(
-      startIndex, triangles->size(), _numberOfThreads - 1, triangles);
-
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  setThreadTask(THREAD_TASK::SINGLE_TRI);
 
   t.stop();
   resultCollection.addResult(t);
@@ -932,12 +938,6 @@ void BenchVulkan::singlePipelineDraw(ResultCollection& resultCollection,
   Timer t;
   t.start("Construction");
 
-  std::array<Triangle, BENCHMARK_N>* triangles;
-  if (device) {
-    triangles = &_trianglesDevice;
-  } else {
-    triangles = &_trianglesHost;
-  }
   _renderContext.currentSwapChainImageIndex =
       _deviceContext.device
           .acquireNextImageKHR(_swapchainContext.swapchain,
@@ -946,30 +946,7 @@ void BenchVulkan::singlePipelineDraw(ResultCollection& resultCollection,
                                nullptr)
           .value;
 
-  const int DRAWS_PER_THREAD = _pipelines.size() / _numberOfThreads;
-  int       startIndex       = 0;
-  int       endIndex         = DRAWS_PER_THREAD;
-
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(&BenchVulkan::thread_singlePipelineDraw,
-                         this,
-                         startIndex,
-                         endIndex,
-                         i,
-                         triangles);
-
-    startIndex += DRAWS_PER_THREAD;
-    endIndex += DRAWS_PER_THREAD;
-  }
-
-  thread_singlePipelineDraw(
-      startIndex, triangles->size(), _numberOfThreads - 1, triangles);
-
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  setThreadTask(THREAD_TASK::SINGLE_PIPE);
 
   t.stop();
   resultCollection.addResult(t);
@@ -1039,12 +1016,6 @@ void BenchVulkan::optimalMultipleTriangleDraw(
   Timer t;
   t.start("Construction");
 
-  std::array<Triangle, BENCHMARK_N>* triangles;
-  if (device) {
-    triangles = &_trianglesDevice;
-  } else {
-    triangles = &_trianglesHost;
-  }
   _renderContext.currentSwapChainImageIndex =
       _deviceContext.device
           .acquireNextImageKHR(_swapchainContext.swapchain,
@@ -1053,30 +1024,7 @@ void BenchVulkan::optimalMultipleTriangleDraw(
                                nullptr)
           .value;
 
-  const int DRAWS_PER_THREAD = _pipelines.size() / _numberOfThreads;
-  int       startIndex       = 0;
-  int       endIndex         = DRAWS_PER_THREAD;
-
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(&BenchVulkan::thread_optimalMultiTriangleDraw,
-                         this,
-                         startIndex,
-                         endIndex,
-                         i,
-                         triangles);
-
-    startIndex += DRAWS_PER_THREAD;
-    endIndex += DRAWS_PER_THREAD;
-  }
-
-  thread_optimalMultiTriangleDraw(
-      startIndex, triangles->size(), _numberOfThreads - 1, triangles);
-
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  setThreadTask(THREAD_TASK::OPTIMAL);
 
   t.stop();
   resultCollection.addResult(t);
@@ -1146,12 +1094,6 @@ void BenchVulkan::badMultipleTriangleDraw(ResultCollection& resultCollection,
   Timer t;
   t.start("Construction");
 
-  std::array<Triangle, BENCHMARK_N>* triangles;
-  if (device) {
-    triangles = &_trianglesDevice;
-  } else {
-    triangles = &_trianglesHost;
-  }
   _renderContext.currentSwapChainImageIndex =
       _deviceContext.device
           .acquireNextImageKHR(_swapchainContext.swapchain,
@@ -1160,30 +1102,7 @@ void BenchVulkan::badMultipleTriangleDraw(ResultCollection& resultCollection,
                                nullptr)
           .value;
 
-  const int DRAWS_PER_THREAD = _pipelines.size() / _numberOfThreads;
-  int       startIndex       = 0;
-  int       endIndex         = DRAWS_PER_THREAD;
-
-  std::vector<std::thread> threads;
-  threads.reserve(_numberOfThreads - 1);
-  for (int i = 0; i < _numberOfThreads - 1; i++) {
-    threads.emplace_back(&BenchVulkan::thread_badMultipleTriangleDraw,
-                         this,
-                         startIndex,
-                         endIndex,
-                         i,
-                         triangles);
-
-    startIndex += DRAWS_PER_THREAD;
-    endIndex += DRAWS_PER_THREAD;
-  }
-
-  thread_badMultipleTriangleDraw(
-      startIndex, triangles->size(), _numberOfThreads - 1, triangles);
-
-  for (auto& thread : threads) {
-    thread.join();
-  }
+  setThreadTask(THREAD_TASK::BAD);
 
   t.stop();
   resultCollection.addResult(t);
@@ -1248,6 +1167,17 @@ void BenchVulkan::drawSubmission() {
 }
 
 void BenchVulkan::clean_up(ResultCollection& resultCollection) {
+  for (int i = 0; i < _numberOfThreads; i++) {
+    _threadSignals[i] = THREAD_TASK::QUIT;
+    // _threadWorkMutexes[i].unlock();
+    // _threadIdleMutexes[i].unlock();
+  }
+
+  for (auto& thread : _threads) {
+    thread.join();
+  }
+  _threads.clear();
+
   _deviceContext.device.waitIdle();
 
   for (auto& pipeline : _pipelines) {

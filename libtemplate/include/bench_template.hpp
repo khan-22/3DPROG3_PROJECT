@@ -18,6 +18,8 @@ class BenchTemplate {
   BenchTemplate(int numberOfThreads, int N, int M);
   virtual ~BenchTemplate();
 
+  virtual void startupThreads(){};
+
   virtual void initialize(ResultCollection& resultCollection) = 0;
 
   virtual void createTrianglesHost(ResultCollection& resultCollection)  = 0;
