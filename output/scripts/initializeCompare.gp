@@ -38,7 +38,7 @@ set rmargin at screen XSPLIT
 # set xlabel "Stage"
 set xrange[1:15]
 set xtics("Window" 2,	"Instance" 3,	"Surface" 4,	"PhysicalDevice" 5,	"Device" 6,	"Swapchain" 7,	"RenderPass" 8,	"Framebuffers" 9,	"CommandPool" 10,	"CommandBuffers" 11,	"PipelineLayout" 12,	"Semaphores"  13,	"Total" 14)
-plot for[COL=1:13] "../vk.a.initialize.1.txt" i 1 using (COL+1):COL with boxes lc rgb COLOR_V
+plot for[COL=1:12] "../vk.a.initialize.1.txt" i 1 using (COL+1):COL+0 with boxes lc rgb COLOR_V, '' i 1 using (14):14 with boxes lc rgb COLOR_V
 
 unset arrow
 unset border
