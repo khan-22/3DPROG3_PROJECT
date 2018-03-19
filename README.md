@@ -37,6 +37,7 @@ bind a pipeline, render a triangle, bind _another_ pipeline, render _another_ tr
 * **Initialization**
   * **Window Creation**
     * Both API's will be using the same window library (glfw). OpenGL context creation is mostly done by the help of this library, meanwhile most Vulkan initialization is done by hand.
+	* Run steps necessary for initialization, time the results. Which is slower? Are they roughly equal?
   * **Resource Creation** 
 	* Create _N_ vertex buffers + data (in multiple different ways so that we have multiple points of comparison).
     * Create _2N_ shader modules with slightly differing source to avoid caching.
