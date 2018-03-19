@@ -390,31 +390,30 @@ void BenchVulkan::thread_createTrianglesFast(int    startIndex,
                                              int    endIndex,
                                              int    threadIndex,
                                              Timer* timer) {
-  const size_t size = 3 * sizeof(Vertex);
+  const size_t size         = 3 * sizeof(Vertex);
+  const size_t numTriangles = endIndex - startIndex;
 
-  std::vector<std::pair<vk::Buffer, vk::DeviceMemory>> stagings;
-  stagings.reserve(endIndex - startIndex);
+  ThreadContext& threadContext = _threadContexts[threadIndex];
+  threadContext.staging =
+      getNewBuffer(size * numTriangles,
+                   vk::BufferUsageFlagBits::eTransferSrc,
+                   vk::MemoryPropertyFlagBits::eHostVisible |
+                       vk::MemoryPropertyFlagBits::eHostCoherent);
 
   for (int i = startIndex; i < endIndex; i++) {
     Triangle& triangle = _trianglesDevice[i];
 
-    auto stagingBufferAndMemory =
-        getNewBuffer(size,
-                     vk::BufferUsageFlagBits::eTransferSrc,
-                     vk::MemoryPropertyFlagBits::eHostVisible |
-                         vk::MemoryPropertyFlagBits::eHostCoherent);
-
     void* mappedMemory;
-    CRITICAL(_deviceContext.device.mapMemory(stagingBufferAndMemory.second,
-                                             0,
+    CRITICAL(_deviceContext.device.mapMemory(threadContext.staging.second,
+                                             size * (i - startIndex),
                                              size,
                                              vk::MemoryMapFlagBits(0),
                                              &mappedMemory),
              "mapMemory");
     memcpy(mappedMemory, getNextTriangle().data(), size);
-    _deviceContext.device.unmapMemory(stagingBufferAndMemory.second);
+    _deviceContext.device.unmapMemory(threadContext.staging.second);
 
-    stagings.push_back(stagingBufferAndMemory);
+    // stagings.push_back(threadContext.staging);
 
     auto bufferAndMemory =
         getNewBuffer(size,
@@ -426,42 +425,24 @@ void BenchVulkan::thread_createTrianglesFast(int    startIndex,
     triangle.memory = bufferAndMemory.second;
   }
 
-  vk::CommandBuffer commandBuffer = getTransferCommandBuffer(threadIndex);
+  vk::CommandBuffer& commandBuffer =
+      threadContext
+          .commandBuffers[0];  // getTransferCommandBuffer(threadIndex);
 
   vk::CommandBufferBeginInfo beginInfo;
   beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
   commandBuffer.begin(beginInfo);
-  vk::BufferCopy copyRegion;
-  copyRegion.srcOffset = 0;
-  copyRegion.dstOffset = 0;
-  copyRegion.size      = size;
-
   for (int i = startIndex; i < endIndex; i++) {
+    vk::BufferCopy copyRegion;
+    copyRegion.srcOffset = size * (i - startIndex);
+    copyRegion.dstOffset = 0;
+    copyRegion.size      = size;
+
     commandBuffer.copyBuffer(
-        stagings[i - startIndex].first, _trianglesDevice[i].buffer, copyRegion);
+        threadContext.staging.first, _trianglesDevice[i].buffer, copyRegion);
   }
   commandBuffer.end();
-
-  vk::SubmitInfo submitInfo;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers    = &commandBuffer;
-
-  _threadContexts[threadIndex].queue.submit(submitInfo, nullptr);
-
-  if (timer) {
-    timer->stop();
-  }
-
-  _threadContexts[threadIndex].queue.waitIdle();
-
-  _deviceContext.device.freeCommandBuffers(
-      _threadContexts[threadIndex].commandPool, commandBuffer);
-
-  for (auto& staging : stagings) {
-    _deviceContext.device.destroyBuffer(staging.first);
-    _deviceContext.device.freeMemory(staging.second);
-  }
 }
 
 void BenchVulkan::createTrianglesFast(ResultCollection& resultCollection) {
@@ -487,10 +468,31 @@ void BenchVulkan::createTrianglesFast(ResultCollection& resultCollection) {
   t.start("Work");
   thread_createTrianglesFast(
       startIndex, _trianglesDevice.size(), _numberOfThreads - 1, &t);
-  resultCollection.addResult(t);
 
   for (auto& thread : threads) {
     thread.join();
+  }
+
+  std::vector<vk::CommandBuffer> commandBuffers;
+  for (auto& tc : _threadContexts) {
+    commandBuffers.push_back(tc.commandBuffers[0]);
+  }
+
+  ThreadContext& threadContext = _threadContexts[_numberOfThreads - 1];
+
+  vk::SubmitInfo submitInfo;
+  submitInfo.commandBufferCount = commandBuffers.size();
+  submitInfo.pCommandBuffers    = commandBuffers.data();
+
+  threadContext.queue.submit(submitInfo, nullptr);
+
+  t.stop();
+  resultCollection.addResult(t);
+  threadContext.queue.waitIdle();
+
+  for (auto& tc : _threadContexts) {
+    _deviceContext.device.destroyBuffer(tc.staging.first);
+    _deviceContext.device.freeMemory(tc.staging.second);
   }
 }
 

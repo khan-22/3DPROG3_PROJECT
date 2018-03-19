@@ -176,6 +176,8 @@ class BenchVulkan : public BenchTemplate {
     std::vector<vk::CommandBuffer> commandBuffers;
     vk::CommandBuffer*             currentCommandBuffer;
     vk::Queue                      queue;
+
+    std::pair<vk::Buffer, vk::DeviceMemory> staging;
   };
   std::vector<ThreadContext> _threadContexts;
 
