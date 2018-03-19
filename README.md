@@ -51,6 +51,9 @@ bind a pipeline, render a triangle, bind _another_ pipeline, render _another_ tr
   * **Clean Up**
     * No real thorough tests here. Mostly just time the shutdown.
 
+**If you want to change N and M, to run a faster or more inclusive test, you can edit the macros BENCHMARK_N and BENCHMARK_M as well as BENCHMARK_OUTER_RUNS to something lower.
+Keep in mind that BENCHMARK_M must be lower than BENCHMARK_N for the program to compile!**.
+
 # Instructions
 
 Compilation instructions using CMake
