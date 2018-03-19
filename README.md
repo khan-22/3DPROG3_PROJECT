@@ -10,13 +10,6 @@ where in OpenGL you may not be able to get a straight answer. We'll be investiga
 as much as we can afford with regards to rendering triangles.
 (Initialization, Vertex Buffer creation, Shader pipeline creation, Rendering...)
 
-[comment]: <> (The aim of our project is to measure the driver overhead in Vulkan, 
-as compared with OpenGL to determine
-how significant the difference may be during different stages of the program
-(initialization, execution, clean up, etc...). Since Vulkan claims
-to be low-overhead, we would expect to see that reflected in the data, assuming
-our tests are accurately representing reality. )
-
 We'd also hope to be able to draw
 some conclusions around what parts of the program that the different APIs
 have the most overhead. Since one of the strengths of Vulkan is that you have
