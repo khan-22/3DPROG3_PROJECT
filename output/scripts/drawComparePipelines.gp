@@ -1,6 +1,6 @@
 call "Header.gp" 900 (768 - 200)
 
-set output "drawCompare.png"
+set output "drawComparePipelines.png"
 
 set multiplot
 set xtics nomirror
@@ -24,7 +24,7 @@ unset border
 
 # stats "../vk.a.initialize.2.40.2.txt" using 6
 
-stats "../ogl.h.firstDraw.1.txt" i 0 using 2 nooutput
+stats "../ogl.k.firstDrawPipelines.1.txt" i 0 using 2 nooutput
 
 # set label 3 "Significant driver involvement" at 3, screen 0.64 font ",16"
 # set arrow 1 from 3, screen 0.6 to 3, screen 0.5 head size 5.0,2.0 front filled
@@ -39,7 +39,7 @@ RMARGIN=0.94
 
 set style rectangle
 
-set label 3 "Using N pipelines to render N triangles (1:1)" at screen 0.5, screen 0.93 font ",20" front center
+set label 3 "Using N pipelines to render 1 triangle" at screen 0.5, screen 0.93 font ",20" front center
 
 LABEL2="Vulkan"
 set object 2 rect at graph 0.5, graph 0.87 size char strlen(LABEL2)+5, char 1 fc "white" front  fs noborder
@@ -49,12 +49,12 @@ set ylabel "Time in seconds" offset 2.5 font ",16"
 set lmargin at screen (LMARGIN)
 set rmargin at screen (LMARGIN+XWIDTH)
 set xrange[-1:4]
-set yrange[0:STATS_max*1.3]
+set yrange[0:2.0]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.h.firstDraw.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
-     "../vk.h.firstDraw.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
-     "../vk.h.firstDraw.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
-     "../vk.h.firstDraw.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
+plot "../vk.k.firstDrawPipelines.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
+     "../vk.k.firstDrawPipelines.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
+     "../vk.k.firstDrawPipelines.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
+     "../vk.k.firstDrawPipelines.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
 
 # set label 2 "Vulkan" at graph 0.3, graph 0.85 font ",20" center
 unset object 2
@@ -65,10 +65,10 @@ set lmargin at screen (LMARGIN+XWIDTH)
 set rmargin at screen (LMARGIN+XWIDTH*2)
 set ytics format ""
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.i.secondDraw.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
-     "../vk.i.secondDraw.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
-     "../vk.i.secondDraw.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
-     "../vk.i.secondDraw.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
+plot "../vk.l.secondDrawPipelines.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
+     "../vk.l.secondDrawPipelines.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
+     "../vk.l.secondDrawPipelines.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
+     "../vk.l.secondDrawPipelines.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
 
 unset label 2
 set title "Third time"
@@ -77,10 +77,10 @@ set lmargin at screen (LMARGIN+XWIDTH*2)
 set rmargin at screen (LMARGIN+XWIDTH*3)
 set ytics format ""
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.j.thirdDraw.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
-     "../vk.j.thirdDraw.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
-     "../vk.j.thirdDraw.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
-     "../vk.j.thirdDraw.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
+plot "../vk.m.thirdDrawPipelines.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
+     "../vk.m.thirdDrawPipelines.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
+     "../vk.m.thirdDrawPipelines.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
+     "../vk.m.thirdDrawPipelines.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
 
 
 
@@ -110,7 +110,7 @@ set lmargin at screen (LMARGIN+XWIDTH*3)
 set rmargin at screen (LMARGIN+XWIDTH*3+XWIDTH2)
 set xrange[-2:2]
 set xtics("1 Thread" 0)
-plot "../ogl.h.firstDraw.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
+plot "../ogl.k.firstDrawPipelines.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
 
 
 
@@ -123,7 +123,7 @@ set lmargin at screen (LMARGIN+XWIDTH*3+XWIDTH2)
 set rmargin at screen (LMARGIN+XWIDTH*3+XWIDTH2*2)
 set xrange[-2:2]
 set xtics("1 Thread" 0)
-plot "../ogl.i.secondDraw.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
+plot "../ogl.l.secondDrawPipelines.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
 
 unset border
 unset label 2
@@ -135,7 +135,7 @@ set lmargin at screen (LMARGIN+XWIDTH*3+XWIDTH2*2)
 set rmargin at screen (RMARGIN)
 set xrange[-2:2]
 set xtics("1 Thread" 0)
-plot "../ogl.j.thirdDraw.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
+plot "../ogl.m.thirdDrawPipelines.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
 
 
 

@@ -1,6 +1,6 @@
-call "Header.gp" 768 (768 - 200)
+call "Header.gp" 900 (768 - 200)
 
-set output "stateChangeCompare.png"
+set output "drawCompareTriangles.png"
 
 set multiplot
 set xtics nomirror
@@ -24,7 +24,7 @@ unset border
 
 # stats "../vk.a.initialize.2.40.2.txt" using 6
 
-stats "../ogl.o.badMultipleTriangleDraw.1.txt" i 0 using 2 nooutput
+stats "../ogl.h.firstDrawTriangles.1.txt" i 0 using 2 nooutput
 
 # set label 3 "Significant driver involvement" at 3, screen 0.64 font ",16"
 # set arrow 1 from 3, screen 0.6 to 3, screen 0.5 head size 5.0,2.0 front filled
@@ -32,60 +32,110 @@ stats "../ogl.o.badMultipleTriangleDraw.1.txt" i 0 using 2 nooutput
 # set arrow 3 from 7, screen 0.6 to 7, screen 0.5 head size 5.0,2.0 front filled
 
 set border 8
-LMARGIN=0.095
-RMARGIN=0.95
-XWIDTH=(RMARGIN-LMARGIN)/4
+LMARGIN=0.10
+XWIDTH=0.17
+XWIDTH2=0.11
+RMARGIN=0.94
 
-set label 3 "Using N pipelines to draw N * M triangles (1:400)" at screen 0.5, screen 0.93 font ",20" center
+set style rectangle
 
-set label 2 "Vulkan" at graph 0.3, graph 0.85 font ",20" center
-set title "Optimal"
+set label 3 "Using 1 pipeline to render N triangles" at screen 0.5, screen 0.93 font ",20" front center
+
+LABEL2="Vulkan"
+set object 2 rect at graph 0.5, graph 0.87 size char strlen(LABEL2)+5, char 1 fc "white" front  fs noborder
+set label 2 "Vulkan" at graph 0.5, graph 0.87 font ",20" center front
+set title "First time"
 set ylabel "Time in seconds" offset 2.5 font ",16"
 set lmargin at screen (LMARGIN)
 set rmargin at screen (LMARGIN+XWIDTH)
 set xrange[-1:4]
-set yrange[0:STATS_max*1.6]
+set yrange[0:0.51]
 set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.n.optimalMultipleTriangleDraw.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
-     "../vk.n.optimalMultipleTriangleDraw.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
-     "../vk.n.optimalMultipleTriangleDraw.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
-     "../vk.n.optimalMultipleTriangleDraw.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
+plot "../vk.h.firstDrawTriangles.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
+     "../vk.h.firstDrawTriangles.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
+     "../vk.h.firstDrawTriangles.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
+     "../vk.h.firstDrawTriangles.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
 
 # set label 2 "Vulkan" at graph 0.3, graph 0.85 font ",20" center
+unset object 2
 unset label 2
-set title "Non-optimal"
+set title "Second time"
 unset ylabel
-set ytics format ""
 set lmargin at screen (LMARGIN+XWIDTH)
 set rmargin at screen (LMARGIN+XWIDTH*2)
-set xrange[-1:4]
-set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
-plot "../vk.o.badMultipleTriangleDraw.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
-     "../vk.o.badMultipleTriangleDraw.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
-     "../vk.o.badMultipleTriangleDraw.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
-     "../vk.o.badMultipleTriangleDraw.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
-
-set label 2 "OpenGL" at graph 0.4, graph 0.85 font ",20" center
-set title "Optimal"
-unset ylabel
 set ytics format ""
-set lmargin at screen (LMARGIN+XWIDTH*2)
-set rmargin at screen (LMARGIN+XWIDTH*3)
-set xrange[-2:2]
-set xtics("1 Thread" 0)
-plot "../ogl.n.optimalMultipleTriangleDraw.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O,
-
+set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
+plot "../vk.i.secondDrawTriangles.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
+     "../vk.i.secondDrawTriangles.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
+     "../vk.i.secondDrawTriangles.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
+     "../vk.i.secondDrawTriangles.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
 
 unset label 2
-unset border
-set title "Non-optimal"
+set title "Third time"
+unset ylabel
+set lmargin at screen (LMARGIN+XWIDTH*2)
+set rmargin at screen (LMARGIN+XWIDTH*3)
+set ytics format ""
+set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
+plot "../vk.j.thirdDrawTriangles.1.txt" i 0 using (0):5 with boxplot lc rgb COLOR_V, \
+     "../vk.j.thirdDrawTriangles.2.txt" i 0 using (1):5 with boxplot lc rgb COLOR_V, \
+     "../vk.j.thirdDrawTriangles.4.txt" i 0 using (2):5 with boxplot lc rgb COLOR_V, \
+     "../vk.j.thirdDrawTriangles.8.txt" i 0 using (3):5 with boxplot lc rgb COLOR_V,
+
+
+
+# set label 2 "Vulkan" at graph 0.3, graph 0.85 font ",20" center
+# set title "Spir-V into native\n+ Pipeline creation"
+# unset ylabel
+# set ytics format ""
+# set lmargin at screen (LMARGIN+XWIDTH)
+# set rmargin at screen (LMARGIN+XWIDTH*2)
+# set xrange[-1:4]
+# set xtics("1 Thread" 0, "2 Threads" 1, "4 Threads" 2, "8 Threads" 3)
+# plot "../vk.g.createPipelines.1.txt" i 0 using (0):2 with boxplot lc rgb "#770111", \
+#      "../vk.g.createPipelines.2.txt" i 0 using (1):2 with boxplot lc rgb "#770111", \
+#      "../vk.g.createPipelines.4.txt" i 0 using (2):2 with boxplot lc rgb "#770111", \
+#      "../vk.g.createPipelines.8.txt" i 0 using (3):2 with boxplot lc rgb "#770111",
+
+
+
+LABEL2="OpenGL"
+set object 2 rect at graph 0.5, graph 0.87 size char strlen(LABEL2)+5, char 1 fc "white" front  fs noborder
+set label 2 "OpenGL" at graph 0.5, graph 0.87 font ",20" center front
+# unset label 2
+set title "First time"
 unset ylabel
 set ytics format ""
 set lmargin at screen (LMARGIN+XWIDTH*3)
+set rmargin at screen (LMARGIN+XWIDTH*3+XWIDTH2)
+set xrange[-2:2]
+set xtics("1 Thread" 0)
+plot "../ogl.h.firstDrawTriangles.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
+
+
+
+unset label 2
+# set label 2 "OpenGL" at graph 0.4, graph 0.85 font ",20" center
+set title "Second time"
+unset ylabel
+set ytics format ""
+set lmargin at screen (LMARGIN+XWIDTH*3+XWIDTH2)
+set rmargin at screen (LMARGIN+XWIDTH*3+XWIDTH2*2)
+set xrange[-2:2]
+set xtics("1 Thread" 0)
+plot "../ogl.i.secondDrawTriangles.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
+
+unset border
+unset label 2
+# set label 2 "OpenGL" at graph 0.4, graph 0.85 font ",20" center
+set title "Third time"
+unset ylabel
+set ytics format ""
+set lmargin at screen (LMARGIN+XWIDTH*3+XWIDTH2*2)
 set rmargin at screen (RMARGIN)
 set xrange[-2:2]
-plot "../ogl.o.badMultipleTriangleDraw.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
-
+set xtics("1 Thread" 0)
+plot "../ogl.j.thirdDrawTriangles.1.txt" i 0 using (0):2 with boxplot lc rgb COLOR_O, \
 
 
 

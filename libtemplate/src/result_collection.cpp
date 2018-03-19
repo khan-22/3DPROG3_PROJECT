@@ -78,14 +78,25 @@ std::ostream& operator<<(std::ostream& a, const ResultCollection& b) {
     a << "\"" << result.getColumnHead() << "\""
       << "\t";
   }
+  a << "\"Calculated Total\"";
+
+  std::vector<double> calculatedTotals;
+
   for (auto& row : b._results) {
     if (row.size() > 0) {
       a << std::endl;
       Time timestamp = row[0]._start;
       a << timestamp.time_since_epoch().count() << "\t";
+      double calculatedTotal = 0.0;
       for (auto& result : row) {
-        a << result.time << "\t";
+        double resultTime = result.time;
+        if (result.getColumnHead() != "Total") {
+          calculatedTotal += resultTime;
+        }
+        a << resultTime << "\t";
       }
+      a << calculatedTotal;
+      calculatedTotals.push_back(calculatedTotal);
     }
   }
 
@@ -95,6 +106,8 @@ std::ostream& operator<<(std::ostream& a, const ResultCollection& b) {
     a << "\"" << result.getColumnHead() << "\""
       << "\t";
   }
+  a << "\"Calculated Total\"";
+
   a << std::endl;
   std::vector<double> averages(b._results[0].size());
   for (auto& row : b._results) {
@@ -108,6 +121,13 @@ std::ostream& operator<<(std::ostream& a, const ResultCollection& b) {
     avg /= b._results.size() - 1;
     a << avg << "\t";
   }
+
+  double averageCalculatedTotal = 0.0;
+  for (auto& ct : calculatedTotals) {
+    averageCalculatedTotal += ct;
+  }
+  a << averageCalculatedTotal / calculatedTotals.size();
+
   a << std::endl;
 
   return a;
