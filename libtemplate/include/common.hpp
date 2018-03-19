@@ -14,8 +14,8 @@ using Time     = std::chrono::high_resolution_clock::time_point;
 using TimeSpan = std::chrono::duration<double>;
 
 #define BENCHMARK_OUTER_RUNS 10
-#define BENCHMARK_N 5000
-#define BENCHMARK_M 200
+#define BENCHMARK_N 2000
+#define BENCHMARK_M 80
 
 static_assert(BENCHMARK_N >= BENCHMARK_M,
               "BENCHMARK_N must be GREATER or EQUAL to BENCHMARK_M");
