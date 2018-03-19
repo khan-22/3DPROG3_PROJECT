@@ -228,8 +228,10 @@ class BenchVulkan : public BenchTemplate {
   std::array<Triangle, BENCHMARK_N> _trianglesHost;
   std::array<Triangle, BENCHMARK_N> _trianglesDevice;
 
-  std::array<std::pair<vk::ShaderModule, vk::ShaderModule>, BENCHMARK_N>
-      _shaderModules;
+  //std::array<std::pair<vk::ShaderModule, vk::ShaderModule>, BENCHMARK_N>
+  //    _shaderModules;
+
+	std::array<std::pair<std::vector<uint32_t>, std::vector<uint32_t>>, BENCHMARK_N> _spirvPairs;
 
   std::array<vk::Pipeline, BENCHMARK_N> _pipelines;
 

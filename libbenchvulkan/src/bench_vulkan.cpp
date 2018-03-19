@@ -592,7 +592,7 @@ void BenchVulkan::thread_createShaderModules(int startIndex,
   shaderc::CompileOptions options;
 
   for (int i = startIndex; i < endIndex; i++) {
-    auto& shaderPair     = _shaderModules[i];
+    //auto& shaderPair     = _shaderModules[i];
     auto  sourcePairCopy = sourcePair;
 
     auto header          = getNextDefine();
@@ -652,28 +652,27 @@ void BenchVulkan::thread_createShaderModules(int startIndex,
                 << fSpirvResult.GetErrorMessage() << std::endl;
       std::exit(EXIT_FAILURE);
     }
-
-    std::pair<std::vector<uint32_t>, std::vector<uint32_t>> spirvPair = {
+		_spirvPairs[i] = {
         {vSpirvResult.cbegin(), vSpirvResult.cend()},
         {fSpirvResult.cbegin(), fSpirvResult.cend()}};
 
-    vk::ShaderModuleCreateInfo vShaderInfo;
-    vShaderInfo.codeSize = spirvPair.first.size() * sizeof(spirvPair.first[0]);
-    vShaderInfo.pCode =
-        reinterpret_cast<const uint32_t*>(spirvPair.first.data());
+    //vk::ShaderModuleCreateInfo vShaderInfo;
+    //vShaderInfo.codeSize = spirvPair.first.size() * sizeof(spirvPair.first[0]);
+    //vShaderInfo.pCode =
+    //    reinterpret_cast<const uint32_t*>(spirvPair.first.data());
 
-    vk::ShaderModuleCreateInfo fShaderInfo;
-    fShaderInfo.codeSize =
-        spirvPair.second.size() * sizeof(spirvPair.second[0]);
-    fShaderInfo.pCode =
-        reinterpret_cast<const uint32_t*>(spirvPair.second.data());
+    //vk::ShaderModuleCreateInfo fShaderInfo;
+    //fShaderInfo.codeSize =
+    //    spirvPair.second.size() * sizeof(spirvPair.second[0]);
+    //fShaderInfo.pCode =
+    //    reinterpret_cast<const uint32_t*>(spirvPair.second.data());
 
-    CRITICAL(_deviceContext.device.createShaderModule(
-                 &vShaderInfo, nullptr, &shaderPair.first),
-             "createShaderModule");
-    CRITICAL(_deviceContext.device.createShaderModule(
-                 &fShaderInfo, nullptr, &shaderPair.second),
-             "createShaderModule");
+    //CRITICAL(_deviceContext.device.createShaderModule(
+    //             &vShaderInfo, nullptr, &shaderPair.first),
+    //         "createShaderModule");
+    //CRITICAL(_deviceContext.device.createShaderModule(
+    //             &fShaderInfo, nullptr, &shaderPair.second),
+    //         "createShaderModule");
   }
 }
 
@@ -693,14 +692,38 @@ void BenchVulkan::thread_createPipelines(int startIndex,
   for (int i = startIndex; i < endIndex; i++) {
     vk::Pipeline& pipeline = _pipelines[i];
 
+		std::pair<std::vector<uint32_t>, std::vector<uint32_t>>& spirvPair = _spirvPairs[i];
+
+		vk::ShaderModuleCreateInfo vShaderInfo;
+		vShaderInfo.codeSize = spirvPair.first.size() * sizeof(spirvPair.first[0]);
+		vShaderInfo.pCode =
+			reinterpret_cast<const uint32_t*>(spirvPair.first.data());
+
+		vk::ShaderModuleCreateInfo fShaderInfo;
+		fShaderInfo.codeSize =
+			spirvPair.second.size() * sizeof(spirvPair.second[0]);
+		fShaderInfo.pCode =
+			reinterpret_cast<const uint32_t*>(spirvPair.second.data());
+
+		vk::ShaderModule vsModule;
+		vk::ShaderModule fsModule;
+
+		CRITICAL(_deviceContext.device.createShaderModule(
+			&vShaderInfo, nullptr, &vsModule),
+			"createShaderModule");
+		CRITICAL(_deviceContext.device.createShaderModule(
+			&fShaderInfo, nullptr, &fsModule),
+			"createShaderModule");
+
+
     vk::PipelineShaderStageCreateInfo vertShaderStageInfo;
     vertShaderStageInfo.stage  = vk::ShaderStageFlagBits::eVertex;
-    vertShaderStageInfo.module = _shaderModules[i].first;
+    vertShaderStageInfo.module = vsModule;
     vertShaderStageInfo.pName  = "main";
 
     vk::PipelineShaderStageCreateInfo fragShaderStageInfo;
     fragShaderStageInfo.stage  = vk::ShaderStageFlagBits::eFragment;
-    fragShaderStageInfo.module = _shaderModules[i].second;
+    fragShaderStageInfo.module = fsModule;
     fragShaderStageInfo.pName  = "main";
 
     vk::PipelineShaderStageCreateInfo shaderStageInfos[] = {
@@ -804,6 +827,9 @@ void BenchVulkan::thread_createPipelines(int startIndex,
     CRITICAL(_deviceContext.device.createGraphicsPipelines(
                  nullptr, 1, &pipelineInfo, nullptr, &pipeline),
              "createGraphicsPipeline");
+
+		_deviceContext.device.destroyShaderModule(vsModule);
+		_deviceContext.device.destroyShaderModule(fsModule);
   }
 }
 
@@ -1184,10 +1210,10 @@ void BenchVulkan::clean_up(ResultCollection& resultCollection) {
     _deviceContext.device.destroyPipeline(pipeline);
   }
 
-  for (auto& shaderModule : _shaderModules) {
-    _deviceContext.device.destroyShaderModule(shaderModule.first);
-    _deviceContext.device.destroyShaderModule(shaderModule.second);
-  }
+  //for (auto& shaderModule : _shaderModules) {
+  //  _deviceContext.device.destroyShaderModule(shaderModule.first);
+  //  _deviceContext.device.destroyShaderModule(shaderModule.second);
+  //}
 
   for (auto& triangle : _trianglesDevice) {
     _deviceContext.device.destroyBuffer(triangle.buffer, nullptr);
