@@ -96,7 +96,7 @@ you can use cmake-gui to generate a visual studio project instead.
 It is recommended that you use the previous approach if at all possible.
 
 * After cloning the repo, open cmake-gui and pick it as the "source directory".
-* Create a folder named 'build' in the reposotiry root folder and select it as the "build destination".
+* Create a folder named 'build' in the repository root folder and select it as the "build destination".
 * Click the 'Configure' button and choose the build system you want to use.
 * Click generate.
 * Once finished, if you chose visual studio you will now have a Visual Studio Solution and a number of projects available to you in the build folder. To compile and debug you simply open the solution file in visual studio and work as per usual.
